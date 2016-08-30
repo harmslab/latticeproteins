@@ -9,9 +9,11 @@ import random, shelve, os
 #---------------------------------------------------------------------------
 class SequenceError(Exception):
     """Error with a lattice protein sequence."""
+    pass
 #---------------------------------------------------------------------------
 # codes for all residues
-_residues = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
+_residues = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P',
+'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 assert len(_residues) == 20
 #---------------------------------------------------------------------------
 def MostAbundant(population):
@@ -21,7 +23,8 @@ def MostAbundant(population):
     'population' is a list of protein sequences.
     'seq' is returned as the sequence that is most abundant in 'population'.
         If there are several equally abundant sequences, just one of
-        them is returned."""
+        them is returned.
+    """
     seq = population[0]
     n = population.count(seq)
     for seq2 in population[1 : ]:
@@ -86,7 +89,7 @@ def MutateSequence(seq, mutrate):
     Call is: 'seqnew = MutateSequence(seq, mutrate)'
     'seq' is a protein sequence, specified as either a string or a list.
     Mutates each residue in 'seq' to some different residue with
-        probability 'mutrate'.  So 'mutrate' is the per residue 
+        probability 'mutrate'.  So 'mutrate' is the per residue
         mutation rate.
     Returns the new sequence as the list 'seqnew'."""
     mutated = False
@@ -163,7 +166,7 @@ def NMutants(seq, nmutations, nsequences):
 # The database is keyed by string conversions of integer sequence lengths.
 # The values of the sequence length keys are dictionaries keyed by temperatures.
 # The values of the temperature keys are dictionaries keyed by number of contacts.
-# The values of the contact keys are lists of 3-tuples giving the free energy of 
+# The values of the contact keys are lists of 3-tuples giving the free energy of
 # folding, the sequence, and the conformation for all sequences.
 _foldingsequences_database = '_foldingsequences.database'
 #---------------------------------------------------------------------------
@@ -213,21 +216,21 @@ def SaveFoldingSequence(seq, temp, dGf, numcontacts, conf):
 def GetFoldingSequence(length, temp, dGf, numcontacts = None, conf = None, nget = 1):
     """Gets a folding sequence from the database of folding sequences.
 
-    Call is: 's = GetFoldingSequence(length, temp, dGf, 
+    Call is: 's = GetFoldingSequence(length, temp, dGf,
         [numcontacts = None, conf = None, nget = 1])'
-    This function tries to find a protein in the database of folding sequence 
-        (entries added by 'SaveFoldingSequence') meeting the specified 
-        criteria, and returns its sequence.  If no such protein can be 
+    This function tries to find a protein in the database of folding sequence
+        (entries added by 'SaveFoldingSequence') meeting the specified
+        criteria, and returns its sequence.  If no such protein can be
         found, it returns 'None'.
     'length' is an integer specifying the lengths of sequences we consider.
     'temp' can be a number, in which case we consider sequences that
-        meet the folding criterium specified by 'dGf' at temperature 
-        'temp'.  Or it can be a 2-tuple, '(mint, maxt)', in which 
+        meet the folding criterium specified by 'dGf' at temperature
+        'temp'.  Or it can be a 2-tuple, '(mint, maxt)', in which
         case we consider sequences that meet the folding criterium
         specified by 'dGf' at some temperature t: mint <= t <= maxt.
     'dGf' can be a number, in which case we consider any sequences
         with folding free energies <= 'dGf'.  Or it can be a 2-tuple,
-        '(ming, maxg)', in which case we consider sequences with 
+        '(ming, maxg)', in which case we consider sequences with
         folding free energies g: ming <= g <= maxg.
     'numcontacts' is on optional argument with a default value of 'None'.  If
         it has the value of 'None', then no selection based on the number
@@ -250,7 +253,7 @@ def GetFoldingSequence(length, temp, dGf, numcontacts = None, conf = None, nget 
         a list of sequences is returned.  This list contains 'nget'
         sequences that meet the specified criteria, or if there are less
         than 'nget' such sequences, returns all that are present.  If 'nget'
-        is 'ALL', returns all sequences in the database that meet the 
+        is 'ALL', returns all sequences in the database that meet the
         specified criteria.
     's' is returned as 'None' if no sequences can be found that meet the
         criteria.  If 'nget' is 1, it is a sequence returned as either a

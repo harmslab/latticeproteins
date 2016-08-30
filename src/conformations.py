@@ -20,18 +20,18 @@ class ConformationsError(Exception):
 # '_loop_in_C' is a Boolean switch specifying whether we try to speed
 # up the energy calculations by doing the looping with the C-extension
 # 'contactlooper'.  'True' means we try to do this.
-_loop_in_C = True 
+_loop_in_C = True
 if _loop_in_C:
     from latticeproteins.contactlooper import NoTargetLooper, TargetLooper
-    
-    
+
+
 class PickleProtocolError(Exception):
     """Error is pickle version is too old. """
 
 PROTOCOL = pickle.HIGHEST_PROTOCOL
 if PROTOCOL < 2:
     raise PickleProtocolError("Version of pickle is outdated for this package. ")
-    
+
 #------------------------------------------------------------------------
 class Conformations(object):
     """A class for storing all of the conformations of a lattice protein."""
@@ -50,7 +50,7 @@ class Conformations(object):
             residues. By default, this is interactions.miyazawa_jernigan.
         The created 'Conformations' object 'c' stores the contact
             lists and the number of conformations with these contact sets
-            for all self-avoiding walks of length 'length'.  It can then 
+            for all self-avoiding walks of length 'length'.  It can then
             be used to compute the free energy of a protein folding to
             the lowest energy conformation."""
         self._interaction_energies = interaction_energies
@@ -94,7 +94,7 @@ class Conformations(object):
         # If we have made it here, we are generating new information for this conformation
         # A listing of all class variables
         # 'self._length' is the length of the protein (self-avoiding walk)
-        self._length = length 
+        self._length = length
         # there are 'self._numconformations[i]' conformations with 'i' contacts
         self._numconformations = {}
         # 'self._contactsets' is a list of contact sets.  'self._contactsets[i]'
@@ -114,19 +114,19 @@ class Conformations(object):
         # is degenerate ('self._contactsetdegeneracy[i]' > 1), the value
         # 'self._contactsetconformation[i]' is 'None'.  Otherwise, it
         # is the string representing the conformation that gives rise
-        # to contact set 'self._contactsets[i]'.  The conformations are given 
+        # to contact set 'self._contactsets[i]'.  The conformations are given
         # such that 'self._contactsetconformation[i][j]'
         # gives the conformation of bond 'j' (0 <= j < 'self._length' - 1)
-        # as 'U' (Up), 'R' (Right), 'D' (Down), or 'L' (Left). 
+        # as 'U' (Up), 'R' (Right), 'D' (Down), or 'L' (Left).
         # We require the first bond to be Up, and the first
-        # non-Up bond to be Right. 
+        # non-Up bond to be Right.
         self._contactsetconformation = []
-        # 'self._numcontactsets[i]' holds the number of different contact 
+        # 'self._numcontactsets[i]' holds the number of different contact
         # sets with 'i' contacts.
         self._numcontactsets = {}
-        # 'self._foldedsequences = {}' holds recently folded sequences.  
+        # 'self._foldedsequences = {}' holds recently folded sequences.
         # The keys are the arguments to 'FoldSequence', and the items
-        # are how many times the saved sequence was accessed and the 
+        # are how many times the saved sequence was accessed and the
         # information about the folded sequence.  Sequences in the keys
         # are strings.
         self._foldedsequences = {}
@@ -151,15 +151,15 @@ class Conformations(object):
         # then 'self._contactsets[cs]' is an integer > 1 that represents
         # the number of conformations coding for this contact set.
         contactsets = {}
-        # 
+        #
         # Now being looping over all possible conformations
         # The initial conformation is all 'U'
         dx = {'U':0, 'R':1, 'D':0, 'L':-1}
         dy = {'U':1, 'R':0, 'D':-1, 'L':0}
-        next = {'U':'R', 'R':'D', 'D':'L', 'L':'U'} 
+        next = {'U':'R', 'R':'D', 'D':'L', 'L':'U'}
         opposite = {'U':'D', 'D':'U', 'R':'L', 'L':'R'}
-        n = self._length - 2 # index of last bond in 'conformation' 
-        conformation = ['U' for i in range(n + 1)] 
+        n = self._length - 2 # index of last bond in 'conformation'
+        conformation = ['U' for i in range(n + 1)]
         first_R = n # index of the first 'R' in the conformation
         ncount = 0
         while True: # keep finding new conformations
@@ -222,7 +222,7 @@ class Conformations(object):
                     try:
                         self._numcontactsets[numcontacts] += 1
                     except KeyError:
-                        self._numcontactsets[numcontacts] = 1 
+                        self._numcontactsets[numcontacts] = 1
                 except TypeError:
                     contactsets[cs] = 2
                 # generate the next conformation
@@ -241,7 +241,7 @@ class Conformations(object):
             if first_R == 0:
                 break
         #
-        # Now use 'contactsets' to generate 'self._contactsets', 
+        # Now use 'contactsets' to generate 'self._contactsets',
         # 'self._contactsetdegeneracy', and 'self._contactsetconformation'
         for (cs, n_or_conf) in contactsets.items():
             # convert 'cs' to the appropriate list
@@ -255,7 +255,7 @@ class Conformations(object):
                 self._contactsetconformation.append(None)
         #
         del contactsets
-        # 
+        #
         # to make the energy evaluations quicker, sort so that
         # contact sets with more conformations are first:
         decorated_list = [(len(self._contactsets[i]), self._contactsets[i], self._contactsetdegeneracy[i], self._contactsetconformation[i]) for i in range(len(self._contactsets))]
@@ -283,7 +283,7 @@ class Conformations(object):
     def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6, dGf_cutoff=None):
         """Folds a protein sequence.
 
-        Call is: '(dGf, conf, numcontacts) = c.FoldSequence(seq, temp,  
+        Call is: '(dGf, minE, conf, numcontacts) = c.FoldSequence(seq, temp,
             [target_conf = None, numsaved = 1e6])'
         'seq' is the sequence of the protein to be folded as one-letter amino
             acid codes.  It should be a string or list of length 'c.Length()'.
@@ -296,7 +296,7 @@ class Conformations(object):
             energy conformation.  If 'target_conf' is not 'None', it
             must be set to a valid conformation string (as described below
             in the description of 'conf') describing a unique conformation
-            (only one conformation with this contact set.  The returned free 
+            (only one conformation with this contact set.  The returned free
             energy 'dGf' is then for folding to 'target_conf', and 'conf'
             is the same as 'target_conf'.
         'dGf_cutoff' is meaningful iff 'target_conf' is not 'None'.
@@ -309,7 +309,7 @@ class Conformations(object):
             save the information for recently folded sequences instead
             of refolding them.  At any time, up to the last 'numsaved'
             unique sequences that were folded under different conditions
-            are saved.  If 'seq' folded with the options set by 
+            are saved.  If 'seq' folded with the options set by
             'temp' and 'target_conf'is one of these
             saved sequences, it can be taken from the saved sequences
             and is not refolded.  As soon as more than 'numsaved'
@@ -328,7 +328,7 @@ class Conformations(object):
             specifying that conformation as follows: the string consists
             of the characters 'U', 'D', 'L', or 'R'.  'conf' is of length
             'len(seq)' - 1, and 'conf[j]' is the conformation of bond 'j'
-            (the bond between residues j and j + 1).  'U' means Up, 
+            (the bond between residues j and j + 1).  'U' means Up,
             'D' means Down, 'R' means Right, and 'L' means Left.
             'numcontacts' is the number of contacts in the lowest
             energy conformation.  If there is no single lowest energy
@@ -372,7 +372,7 @@ class Conformations(object):
             itimeslength = ires * self._length
             for jres in range(ires + 1, self._length):
                 respair = "%s%s" % (seq[ires], seq[jres])
-                res_interactions[itimeslength + jres] = self._interaction_energies[respair]  
+                res_interactions[itimeslength + jres] = self._interaction_energies[respair]
         # now loop over all contact sets
         partitionsum = 0.0 # the partition sum
         contactsets = self._contactsets
@@ -389,7 +389,7 @@ class Conformations(object):
                 for pair in contactsets[0]:
                     minE += res_interactions[pair]
                 ibest = 0
-                for i in range(len(self._contactsets)): 
+                for i in range(len(self._contactsets)):
                     e_contactset = 0.0 # energy of this contact set
                     # loop over all contact pairs in the contact set
                     for pair in contactsets[i]:
@@ -410,8 +410,8 @@ class Conformations(object):
                     (minE, ibest, partitionsum) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 0, 0.0)
                 numcontacts = len(contactsets[ibest])
             else: # do the looping in python
-                minE = conf = numcontacts = None # lowest energy sequence properties 
-                for i in range(len(self._contactsets)): 
+                minE = conf = numcontacts = None # lowest energy sequence properties
+                for i in range(len(self._contactsets)):
                     e_contactset = 0.0 # energy of this contact set
                     # loop over all contact pairs in the contact set
                     for pair in contactsets[i]:
@@ -420,33 +420,33 @@ class Conformations(object):
                         partitionsum += math.exp(-e_contactset / temp) * contactsetdegeneracy[i]
                     if target_conf == contactsetconformation[i]:
                         minE = e_contactset
-                        numcontacts = len(contactsets[i]) 
+                        numcontacts = len(contactsets[i])
             if minE == None:
                 raise ConformationsError("'target_conf' is not a unique conformation.")
             conf = target_conf
         if dGf_cutoff != None and target_conf and partitionsum < 0:
             dGf = None
         else:
-            gu = - temp * math.log(partitionsum - math.exp(-minE / temp)) 
+            gu = - temp * math.log(partitionsum - math.exp(-minE / temp))
             dGf = minE - gu
         # store
-        returnkey = (dGf, conf, numcontacts)
+        returnkey = (dGf, minE, conf, numcontacts)
         self._foldedsequences[savekey] = (0, returnkey)
         # return the variables
-        return returnkey 
+        return returnkey
     #------------------------------------------------------------------
     def UniqueConformations(self, numcontacts):
         """Gets all unique conformations with specified number of contacts.
 
         Call is: 'clist = c.UniqueConformations(numcontacts)'
-        'numcontacts' is an integer >= 0.  
+        'numcontacts' is an integer >= 0.
         The returned list 'clist' is of all unique conformations
             with exactly 'numcontacts' contacts.  A conformation
             is "unique" if it is the only conformation that gives
             rise to its particular contact set.  If there are
             no unique conformations with 'numcontacts' contacts,
             'clist' is an empty list.  Conformations are specified
-            as strings of 'U', 'R', 'L', and 'D' as described in 
+            as strings of 'U', 'R', 'L', and 'D' as described in
             'FoldSequence'."""
         if not (isinstance(numcontacts, int) and numcontacts >= 0):
             raise ConformationsError("Invalid 'numcontacts' of %r." % numcontacts)
@@ -467,7 +467,7 @@ class Conformations(object):
         for cs in self._contactsets:
             if len(cs) > n:
                 n = len(cs)
-        return n 
+        return n
     #------------------------------------------------------------------
     def NumConformations(self, contacts = None):
         """Returns the number of conformations.
@@ -515,8 +515,8 @@ class Conformations(object):
 #---------------------------------------------------------------------------
 _saved_combinations = {} # saved combinations for 'BindLigand'.
 # The keys are the 2-tuples '(protconf, ligandconf)' and the items
-# are how many times the saved sequence was accessed and the 
-# information about the folded sequence.  
+# are how many times the saved sequence was accessed and the
+# information about the folded sequence.
 _saved_exactcombinations = {} # saved exact combinations for 'BindLigand'.
 # The keys are the 4-tuples '(prot, protconf, ligand, ligandconf)' and
 # the items are how many times the combination was accessed and the
@@ -525,7 +525,7 @@ _saved_exactcombinations = {} # saved exact combinations for 'BindLigand'.
 def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa_jernigan, numsaved = 5000, numsavedexact = 5000):
     """Finds the lowest energy for a ligand binding to a lattice protein.
 
-    Call is: '(be, xshift, yshift, conf) = BindLigand(prot, protconf, ligand, 
+    Call is: '(be, xshift, yshift, conf) = BindLigand(prot, protconf, ligand,
         ligandconf, [numsaved = 5000, numsavedexact = 5000])'
     'prot' is the string giving the sequence of the protein to which the ligand
         is being bound.
@@ -534,7 +534,7 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
         length 'len(protseq)' - 1.  'protconf[j]' is the conformation of bond
         'j' (the bond between residues j and j + 1).  'U' means Up,
         'D' means Down, 'R' means Right, and 'L' means Left.
-    'ligand' is the string giving the sequence of the ligand which is 
+    'ligand' is the string giving the sequence of the ligand which is
         being bound to the protein.
     'ligandconf' is a string specifying the conformation of 'ligand', in
         the same format as 'protconf'.
@@ -550,27 +550,27 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
         'xshift' lattice positions to the right, and 'yshift' lattice positions
         up. Then construct the ligand using the ligand sequence given by 'ligand'
         and the conformation given by 'conf', with the first ligand residue
-        in the position specified by 'xshift' and 'yshift'.  The reason that 
+        in the position specified by 'xshift' and 'yshift'.  The reason that
         'conf' might be different from 'ligandconf' is that the ligand might
         be rotated.
-    'numsaved' specifies that we save the possible binding positions 
+    'numsaved' specifies that we save the possible binding positions
         for a given ligand conformation and protein conformation.  This
         means that we do not have to regenerate these positions repeatedly
-        if the function is called many times with the same protein 
+        if the function is called many times with the same protein
         conformation and ligand conformation.  As soon as more than 'numsaved'
-        protein/ligand combinations have been analyzed since the last clearing 
+        protein/ligand combinations have been analyzed since the last clearing
         of the positions, half of the saved positions are deleted from the
         record of saved sequences.  The combinations that are deleted are
         the ones that have been accessed the least frequently since the
         last deletion of combinations.
-    'numsavedexact' specifies that we save the binding energies for a 
+    'numsavedexact' specifies that we save the binding energies for a
         given protein and ligand sequence and conformation combination.
         This means that in addition to not having to regenerate the
         positions repeatedly (ensured by 'numsaved'), we also do not
         have to recalculate the best binding position.  As soon as more
-        than 'numsavedexact' combinations have been analyzed since the last 
+        than 'numsavedexact' combinations have been analyzed since the last
         clearing of the positions, half of the saved positions are deleted
-        from the record of saved combinations.  The combinations that 
+        from the record of saved combinations.  The combinations that
         are deleted are the ones that have been accessed the least
         frequently since the last deletion of combinations."""
     # First see if we have this exact combination saved
@@ -591,7 +591,7 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
     except KeyError:
         pass
     # For each ligand / protein combination, we define the list 'combinations'
-    # This list specifies all of the possible ligand/protein position 
+    # This list specifies all of the possible ligand/protein position
     # combinations that are non-overlapping in a way that allows their
     # binding energy to be rapidly computed as follows:
     # 'combinations' is a list of the tuples '(pairlist, xshift, yshift, conf)'
@@ -599,7 +599,7 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
     #  the meaning described in the documentation string for this method.
     #  'pairlist' is a list of 2-tuples giving all pairs of ligand-protein
     #  residues that are in contact.  The 2-tuple '(i, j)' in 'pairlist'
-    #  means that residue 'prot[i]' from the protein is in contact with 
+    #  means that residue 'prot[i]' from the protein is in contact with
     #  with residue 'ligand[j]' from the ligand.
     #
     # First, we look at the dictionary '_saved_combinations', which stores
@@ -613,8 +613,8 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
             del _saved_combinations[i[1][0]]
         for i in decorateditems[0 : int(numsaved / 2)]:
             _saved_combinations[i[1][0]] = (0, i[1][1][1])
-    # If the combinations for these protein and ligand conformations 
-    # are already stored, get them 
+    # If the combinations for these protein and ligand conformations
+    # are already stored, get them
     savekey = (''.join(protconf), ''.join(ligandconf))
     try:
         _saved_combinations[savekey] = (_saved_combinations[savekey][0] + 1, _saved_combinations[savekey][1])
@@ -628,7 +628,7 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
         # where the first ligand residue is placed at '(0, 0)'.  The
         # values for 'liganddict' are the residue numbers (0 <= number < length).
         # 'protdict' is the same for the protein residues.
-        # We also compute 'minligandx', 'minligandy', 'maxligandx', 
+        # We also compute 'minligandx', 'minligandy', 'maxligandx',
         # and 'maxligandy' represeting the maximum and minimum x and
         # y coordinates for ligand residues.  Also the same for the
         # protein as 'minprotx', etc.
@@ -639,7 +639,7 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
         def RotateLigand(in_conf):
             """Rotates ligand 90 degrees.
 
-            Call is: '(conf, liganddict, minligandx, maxligandx, minligandy, 
+            Call is: '(conf, liganddict, minligandx, maxligandx, minligandy,
                 maxligandy) = RotateLigand(in_conf)'."""
             conf = ''.join([rotate90conf[c] for c in in_conf])
             ires = x = y = minligandx = maxligandx = minligandy = maxligandy = 0
@@ -680,7 +680,7 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
         combinations = []
         conf = ligandconf
         for rotation in range(4):
-            (conf, liganddict, minligandx, maxligandx, minligandy, maxligandy) = RotateLigand(conf)            
+            (conf, liganddict, minligandx, maxligandx, minligandy, maxligandy) = RotateLigand(conf)
             for xshift in range(minprotx - maxligandx - 1, maxprotx + 1 - minligandx):
                 for yshift in range(minproty - maxligandy - 1, maxproty + 1 - minligandy):
                     pairlist = []
@@ -715,22 +715,22 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
 def PrintConformation(seq, conf, file = sys.stdout, latex_format = False, ligand_tup = None, latex_justprot = False):
     """Prints the conformation to screen or file.
 
-    Calls is: 'PrintConformation(seq, conf, [file = sys.stdout, 
+    Calls is: 'PrintConformation(seq, conf, [file = sys.stdout,
         latex_format = False, ligand_tup = None])'
-    'seq' is the protein sequence, as a string or list of 
+    'seq' is the protein sequence, as a string or list of
         one letter amino acid codes.
     'conf' is the string specifying the conformation.  The string
         consists of the characters 'U', 'D', 'L', or 'R', and is of
-        length 'len(seq)' - 1.  'conf[j]' is the conformation of bond  
-        'j' (the bond between residues j and j + 1).  'U' means Up, 
+        length 'len(seq)' - 1.  'conf[j]' is the conformation of bond
+        'j' (the bond between residues j and j + 1).  'U' means Up,
         'D' means Down, 'R' means Right, and 'L' means Left.
     The conformation is printed to the output specified by 'file'.  By
-        default, this is standard output: 'sys.stdout'.  If  
-        'file' has a value different then it should be a writable file 
+        default, this is standard output: 'sys.stdout'.  If
+        'file' has a value different then it should be a writable file
         object  In this case, the conformation
         is written to that file.  'file' must already be open for writing,
         and it is NOT closed by this method.
-    'latex_format' is a boolean switch specifying if we should print the 
+    'latex_format' is a boolean switch specifying if we should print the
         conformation as a LaTex table.  If it is 'True', then we print
         it as a LaTex table, otherwise we do not.
     'latex_justprot' is a boolean switch specifying that if we
@@ -738,7 +738,7 @@ def PrintConformation(seq, conf, file = sys.stdout, latex_format = False, ligand
         dots at empty lattice sites -- just the protein.
     'ligand_tup' can be used to specify that we also print a ligand to
         which the lattice protein is bound.  By default, 'ligand_tup'
-        is 'None', meaning that there is no ligand bound to the 
+        is 'None', meaning that there is no ligand bound to the
         protein.  'ligand_tup' can also be set to the 4-tuple
         '(ligandseq, ligandconf, xshift, yshift)'.  'ligandseq'
         is a sequence giving the sequence of the ligand. 'ligandconf'
@@ -819,7 +819,7 @@ def PrintConformation(seq, conf, file = sys.stdout, latex_format = False, ligand
     # create the image
     xlength = maxx - minx + 5
     image = []
-    if not latex_format: 
+    if not latex_format:
         # top buffer row
         for x in range(xlength):
             if x % 2:

@@ -29,7 +29,7 @@ class Fitness(object):
             * if 'dGdependence' is number, then any sequence with a
                 free energy of folding <= 'dGdependence' has a fitness
                 of one, and any sequence with a free energy of folding
-                > 'dGdependence' has a fitness of 'nofitness'. 
+                > 'dGdependence' has a fitness of 'nofitness'.
             * if 'dGdependence' is the string 'fracfolded' then the fitness
                 of the sequence is the fraction of the sequences that
                 will be folded at temperature 'temp' at equilibrium.
@@ -44,7 +44,7 @@ class Fitness(object):
             * If 'targets' is 'None' then the protein is folded to its
                 lowest energy conformation, whatever this is.
             * If 'targets' is a string specifying a specific conformation
-                then the free energies of folding are for folding the 
+                then the free energies of folding are for folding the
                 protein to this specific conformation.
             * If 'targets' is an integer, then this integer specifies the
                 number of contacts which the lowest energy conformation
@@ -53,22 +53,22 @@ class Fitness(object):
                 fitness is 'nofitness'.
         'ligand' is an optional argument that is used if we are looking
             for a protein that binds a ligand.  By default, it is 'None'
-            meaning that no ligand binding is considered.  If it is set 
-            to another value, it should be the 3-tuple '(ligand, 
+            meaning that no ligand binding is considered.  If it is set
+            to another value, it should be the 3-tuple '(ligand,
             ligandconf, stabcutoff)' where 'ligand' and 'ligandconf'
             are both strings describing a ligand as detailed in the
             documentation string for the 'conformations.BindLigand'
             method.  'stabcutoff' is a number specifying the
             stability cutoff for the protein to fold.  In this case,
             'dGdependence' no longer has any meaning.  The protein
-            is folded according to the parameters 'temp' and 
+            is folded according to the parameters 'temp' and
             'targets' as normal.  If the free energy of folding of
-            the protein is > 'stabcutoff', then the returned fitness is 
+            the protein is > 'stabcutoff', then the returned fitness is
             zero.  If the free energy of folding of the protein is <=
             'stabcutoff', then the returned fitness 'exp(-be)' where
             'be' is the binding energy of the ligand to the protein
             in the folded conformation.
-        'nofitness' is an optional argument specifying the fitness returned 
+        'nofitness' is an optional argument specifying the fitness returned
             for a sequence that does not satisify the requirements set
             by 'dGdependence' or 'targets'.  By default, it is the very
             negative number -1.0e10."""
@@ -107,10 +107,10 @@ class Fitness(object):
             raise FitnessError("Invalid 'seq' of %r." % seq)
         if isinstance(self._targets, str):
             # folding to a target conformation
-            (dG, conf, numcontacts) = self._conformations.FoldSequence(seq, self._temp, self._targets) 
+            (dG, minE, conf, numcontacts) = self._conformations.FoldSequence(seq, self._temp, self._targets)
         else:
             # folding to lowest energy conformation
-            (dG, conf, numcontacts) = self._conformations.FoldSequence(seq, self._temp) 
+            (dG, minE, conf, numcontacts) = self._conformations.FoldSequence(seq, self._temp)
         if isinstance(self._targets, int) and self._targets != numcontacts:
             # wrong number of contacts
             return self._nofitness
@@ -130,16 +130,16 @@ class Fitness(object):
             if dG <= self._dGdependence:
                 return 1.0
             else:
-                return self._nofitness 
+                return self._nofitness
     #---------------------------------------------------------------------
     def Stability(self, seq):
         """Computes the stability of a sequence if it is below cutoff.
 
         Call is: 'dGf = f.Stability(seq)'
-        'seq' is the sequence we are folding.  
-        If 'dGdependence' is set to a free energy cutoff, then if 
+        'seq' is the sequence we are folding.
+        If 'dGdependence' is set to a free energy cutoff, then if
             the dGf > dGdependence, dGf is just returned as 'None'.
-        'dGf' is the free energy of folding of the sequence to the 
+        'dGf' is the free energy of folding of the sequence to the
             target conformation."""
         if isinstance(self._dGdependence, (int, float)):
             return self._conformations.FoldSequence(seq, self._temp, self._targets, dGf_cutoff = self._dGdependence)[0]
