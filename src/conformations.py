@@ -280,11 +280,11 @@ class Conformations(object):
         Call is: 'length = c.Length()'."""
         return self._length
     #------------------------------------------------------------------
-    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6, dGf_cutoff=None):
-        """Folds a protein sequence.
+    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6):
+        """Folds a protein sequence, calculate native energy and partition sum.
 
-        Call is: '(dGf, minE, conf, numcontacts) = c.FoldSequence(seq, temp,
-            [target_conf = None, numsaved = 1e6])'
+        Call is: 'minE, conf, partitionsum, numcontacts = c.FoldSequence(seq, temp,
+            target_conf = None, numsaved = 1e6)'
         'seq' is the sequence of the protein to be folded as one-letter amino
             acid codes.  It should be a string or list of length 'c.Length()'.
         'temp' is the temperature at which the protein is to be folded.  It
@@ -299,12 +299,6 @@ class Conformations(object):
             (only one conformation with this contact set.  The returned free
             energy 'dGf' is then for folding to 'target_conf', and 'conf'
             is the same as 'target_conf'.
-        'dGf_cutoff' is meaningful iff 'target_conf' is not 'None'.
-            In that case, we terminate computing dGf once we can
-            ensure that it is greater than dGf_cutoff.  In this
-            case, dGf is returned as 'None'.  This option only
-            works when we are looping in C (hardcoded constant at
-            the beginning of this module).
         'numsaved' is an option utilizing the fact that the method can
             save the information for recently folded sequences instead
             of refolding them.  At any time, up to the last 'numsaved'
@@ -318,10 +312,10 @@ class Conformations(object):
             deleted from the list of saved sequences.  The sequences
             that are deleted are the ones that have been accessed
             the least frequenty since the last deletion of saved sequences.
-        The returned 3-tuple specifies the free energy of folding to the
-            lowest energy conformation, the conformation if there
-            is a single unique lowest energy conformation, and the
-            number of contacts in that conformation.  'dGf'
+        The returned 4-tuple specifies the total energy of the native state,
+            the conformation if there is a single unique lowest energy
+            conformation, the boltzmann weighted partition function,
+            and the number of contacts in that conformation.  'dGf'
             is the free energy of folding at temperature 'temp', computed
             from the partition function.  If there is a single
             lowest energy conformation, then 'conf' is a string
@@ -424,16 +418,8 @@ class Conformations(object):
             if minE == None:
                 raise ConformationsError("'target_conf' is not a unique conformation.")
             conf = target_conf
-        if dGf_cutoff != None and target_conf and partitionsum < 0:
-            dGf = None
-        else:
-            gu = - temp * math.log(partitionsum - math.exp(-minE / temp))
-            dGf = minE - gu
-        # store
-        returnkey = (dGf, minE, conf, numcontacts)
-        self._foldedsequences[savekey] = (0, returnkey)
-        # return the variables
-        return returnkey
+        return minE, conf, partitionsum, numcontacts
+
     #------------------------------------------------------------------
     def UniqueConformations(self, numcontacts):
         """Gets all unique conformations with specified number of contacts.

@@ -2,23 +2,15 @@
 Lattice protein simulator
 =================================
 
-This is a lattice protein simulator written by `Jesse Bloom`_ and extended by `Zachary Sailer`_ in the `Harms lab`_.
+This is a fork of the lattice protein simulator written by `Jesse Bloom`_.
 
-This simulator has been used in the following publications; if you use this program please cite these publications:
+Please publish Jesse's papers if you use this software:
 
     * `Protein stability promotes evolvability`_
 
     * `Stability and the evolvability of function in a model protein`_
 
-This software is distributed under the `GNU Public License`_, meaning you are free to use this software for pretty much whatever you want provided that you retain the license.
-
-Unfortunately, I wrote this software package back in my PhD days before I was aware of the appropriate procedures for package-level documentation. So although the source code is well documented, there isn't any higher level documentation.
-
-The package is written in Python.
-
-`Version 0.1`_ should work with recent versions of Python 2 (such as 2.7 and probably 2.6).
-
-`Version 0.2`_ has been ported to Python 3 by `Zachary Sailer`_.
+This maintains the `GNU Public License`_ of the original package.
 
 The program uses a few C extensions, and so compilation requires the ``gcc`` compiler. To install the package from source::
 

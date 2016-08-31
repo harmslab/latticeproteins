@@ -14,7 +14,11 @@ class FitnessError(Exception):
 class Fitness(object):
     """Instances of this class compute fitnesses of lattice protein sequences."""
     #------------------------------------------------------------------
-    def __init__(self, temp, conformations, dGdependence, targets, ligand = None, nofitness = -1.0e10):
+    def __init__(self, temp, conformations,
+        dGdependence=None,
+        targets=None,
+        ligand=None,
+        nofitness=-1.0e10):
         """Creates a new instance of fitness evaluator.
 
         Call is: 'f = Fitness(temp, conformations, dGdependence, targets,
@@ -141,10 +145,15 @@ class Fitness(object):
             the dGf > dGdependence, dGf is just returned as 'None'.
         'dGf' is the free energy of folding of the sequence to the
             target conformation."""
-        if isinstance(self._dGdependence, (int, float)):
-            return self._conformations.FoldSequence(seq, self._temp, self._targets, dGf_cutoff = self._dGdependence)[0]
-        else:
-            return self._conformations.FoldSequence(seq, self._temp, self._targets)[0]
+        minE, conf, partitionsum, numcontacts = self._conformations.FoldSequence(seq, self._temp, self._targets)[0]
+        # Calculate a stability... if calculation does not work, stability = 0
+        try:
+            gu = - temp * math.log(partitionsum - math.exp(-minE / temp))
+            dGf = minE - gu
+            return dGf
+        except:
+            return 0
+
     #---------------------------------------------------------------------
     def Info(self, file = sys.stdout):
         """Prints information about the fitness function.
