@@ -113,16 +113,16 @@ class Fitness(object):
             raise FitnessError("Invalid 'seq' of %r." % seq)
         if isinstance(self._targets, str):
             # folding to a target conformation
-            return (minE, conf, partitionsum, numcontacts) = self._conformations.FoldSequence(seq, self._temp, self._targets)
+            return self._conformations.FoldSequence(seq, self._temp, self._targets)
         else:
             # folding to lowest energy conformation
-            return (minE, conf, partitionsum, numcontacts) = self._conformations.FoldSequence(seq, self._temp)
+            return self._conformations.FoldSequence(seq, self._temp)
 
     #---------------------------------------------------------------------
     def Fitness(self, seq):
         """Compute the fitness of the sewuence
         """
-        (fitness, conf, partitionsum, numcontacts) = self._Fitness)seq
+        (fitness, conf, partitionsum, numcontacts) = self._Fitness(seq)
         return fitness
 
     def _Fitness(self, seq):
@@ -182,7 +182,7 @@ class Fitness(object):
         (minE, conf, partitionsum, numcontacts) = self._NativeE(seq)
         # Calculate a stability... if calculation does not work, stability = 0
         try:
-            gu = - temp * math.log(partitionsum - math.exp(-minE / temp))
+            gu = - self._temp * math.log(partitionsum - math.exp(-minE / self._temp))
             dGf = minE - gu
             return (dGf, conf, partitionsum, numcontacts)
         except:

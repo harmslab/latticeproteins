@@ -338,7 +338,7 @@ class Conformations(object):
             for i in decorateditems[0 : int(numsaved / 2)]:
                 self._foldedsequences[i[1][0]] = (0, i[1][1][1])
         # Get the sequence if it stored
-        savekey = (''.join(seq), temp, target_conf, dGf_cutoff)
+        savekey = (''.join(seq), temp, target_conf)
         try:
             self._foldedsequences[savekey] = (self._foldedsequences[savekey][0] + 1, self._foldedsequences[savekey][1])
             return self._foldedsequences[savekey][1]
