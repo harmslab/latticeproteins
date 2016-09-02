@@ -107,7 +107,7 @@ class Fitness(object):
         return minE
 
     def _NativeE(self, seq):
-        """Compute the native energy and partition sum of the sequence.
+        """Compute the lattice native energy and partition sum of a sequence.
         """
         if len(seq) != self.Length():
             raise FitnessError("Invalid 'seq' of %r." % seq)
@@ -120,22 +120,22 @@ class Fitness(object):
 
     #---------------------------------------------------------------------
     def Fitness(self, seq):
-        """Compute the fitness of the sewuence
+        """Compute the fitness of the sequence.
         """
-        (fitness, conf, partitionsum, numcontacts, folds) = self._Fitness(seq)
-        return fitness
+        nativeE_results = self._NativeE(seq)
+        stability_results = self._Stability(*nativeE_results)
+        fitness_results = self._Fitness(*stability_results)
+        return fitness_results[0]
 
-    def _Fitness(self, seq):
-        """Computes the fitness of a sequence.
+    def _Fitness(self, dG, conf, partitionsum, numcontacts, folds):
+        """Computes the fitness from a given stability value
 
         Call is: 'x = f.Fitness(seq)'
         'seq' is a list or string specifying a protein sequence of length
             'f.Length()'.
         'x' is returned as the fitness of this protein sequence."""
-        if len(seq) != self.Length():
-            raise FitnessError("Invalid 'seq' of %r." % seq)
         # folding to a target conformation
-        (dG, conf, partitionsum, numcontacts, folds) = self._Stability(seq)
+        #(dG, conf, partitionsum, numcontacts, folds) = self._Stability(seq)
         if folds is False:
             return (0, conf, partitionsum, numcontacts, folds)
         else:
@@ -170,11 +170,14 @@ class Fitness(object):
             the dGf > dGdependence, dGf is just returned as 'None'.
         'dGf' is the free energy of folding of the sequence to the
             target conformation."""
-        (stability, conf, partitionsum, numcontacts, folds) = self._Stability(seq)
-        return stability
+        NativeE_results = self._NativeE(seq)
+        nativeE = NativeE_results[0]
+        otherinfo = NativeE_results[1:]
+        dG = self._Stability(nativeE, *otherinfo)
+        return dG
 
-    def _Stability(self, seq):
-        """Computes the stability of a sequence if it is below cutoff.
+    def _Stability(self, minE, conf, partitionsum, numcontacts, folds):
+        """Computes a stability from minE and partition function.
 
         Call is: 'dGf = f.Stability(seq)'
         'seq' is the sequence we are folding.
@@ -182,7 +185,7 @@ class Fitness(object):
             the dGf > dGdependence, dGf is just returned as 'None'.
         'dGf' is the free energy of folding of the sequence to the
             target conformation."""
-        (minE, conf, partitionsum, numcontacts, folds) = self._NativeE(seq)
+        #(minE, conf, partitionsum, numcontacts, folds) = self._NativeE(seq)
         # Calculate a stability... if calculation does not work, stability = 0
         if folds:
             gu = - self._temp * math.log(partitionsum - math.exp(-minE / self._temp))
@@ -190,6 +193,59 @@ class Fitness(object):
             return (dGf, conf, partitionsum, numcontacts, folds)
         else:
             return (0, conf, partitionsum, numcontacts, folds)
+
+
+    #---------------------------------------------------------------------
+    def AllMetrics(self, seq):
+        """Compute lattice NativeE, Stability, and Fitness of a given sequence.
+
+        Parameters
+        ----------
+        seq : str
+            protein sequence string.
+
+        Returns
+        -------
+        nativeE : float
+            energy of the native state.
+        dG : float
+            stability of the native state.
+        fitness : float
+            fitness of the native state.
+        """
+        metrics = self._AllMetrics(seq)
+        return metrics[0], metrics[1], metrics[2]
+
+    def _AllMetrics(self, seq):
+        """Compute lattice NativeE, Stability, and Fitness of a given sequence.
+
+        Parameters
+        ----------
+        seq : str
+            protein sequence string.
+
+        Returns
+        -------
+        nativeE : float
+            energy of the native state.
+        dG : float
+            stability of the native state.
+        fitness : float
+            fitness of the native state.
+        conf : str
+            conformation of the native state.
+        partitionsum : float
+            total sum of boltzmann weighted partition function
+        numcontacts : float
+            number of contacts in the native state.
+        folds : boolean
+            True is folded stablely, False is not.
+        """
+        nativeE_results = self._NativeE(seq)
+        stability_results = self._Stability(*nativeE_results)
+        fitness_results = self._Fitness(*stability_results)
+        return (nativeE_results[0], stability_results[0],
+                fitness_results[0], *nativeE_results[1:])
 
     #---------------------------------------------------------------------
     def Info(self, file = sys.stdout):
