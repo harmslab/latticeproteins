@@ -103,7 +103,7 @@ class Fitness(object):
     def NativeE(self, seq):
         """Compute the native energy and return it.
         """
-        (minE, conf, partitionsum, numcontacts) = self._NativeE(seq)
+        (minE, conf, partitionsum, numcontacts, folds) = self._NativeE(seq)
         return minE
 
     def _NativeE(self, seq):
@@ -122,7 +122,7 @@ class Fitness(object):
     def Fitness(self, seq):
         """Compute the fitness of the sewuence
         """
-        (fitness, conf, partitionsum, numcontacts) = self._Fitness(seq)
+        (fitness, conf, partitionsum, numcontacts, folds) = self._Fitness(seq)
         return fitness
 
     def _Fitness(self, seq):
@@ -135,27 +135,30 @@ class Fitness(object):
         if len(seq) != self.Length():
             raise FitnessError("Invalid 'seq' of %r." % seq)
         # folding to a target conformation
-        (dG, conf, partitionsum, numcontacts) = self._Stability(seq)
-        if isinstance(self._targets, int) and self._targets != numcontacts:
-            # wrong number of contacts
-            return self._nofitness
-        if self._ligand:
-            if dG > self._ligand[2]:
-                return 0 # does not stably fold
-            else:
-                be = conformations.BindLigand(seq, conf, self._ligand[0], self._ligand[1])[0]
-                return (math.exp(-be), conf, partitionsum, numcontacts)  # compute the fitness
-        elif self._dGdependence == 'fracfolded':
-            f = 1.0 / (1.0 + math.exp(dG / self._temp))
-            return (f, conf, partitionsum, numcontacts)
-        elif self._dGdependence == 'negstability':
-            return (-dG, conf, partitionsum, numcontacts)
+        (dG, conf, partitionsum, numcontacts, folds) = self._Stability(seq)
+        if folds is False:
+            return (0, conf, partitionsum, numcontacts, folds)
         else:
-            # free energy cutoff
-            if dG <= self._dGdependence:
-                return (1.0, conf, partitionsum, numcontacts)
+            if isinstance(self._targets, int) and self._targets != numcontacts:
+                # wrong number of contacts
+                return self._nofitness
+            if self._ligand:
+                if dG > self._ligand[2]:
+                    return (0, conf, partitionsum, numcontacts, False) # does not stably fold
+                else:
+                    be = conformations.BindLigand(seq, conf, self._ligand[0], self._ligand[1])[0]
+                    return (math.exp(-be), conf, partitionsum, numcontacts, folds)  # compute the fitness
+            elif self._dGdependence == 'fracfolded':
+                f = 1.0 / (1.0 + math.exp(dG / self._temp))
+                return (f, conf, partitionsum, numcontacts, folds)
+            elif self._dGdependence == 'negstability':
+                return (-dG, conf, partitionsum, numcontacts, folds)
             else:
-                return (self._nofitness, conf, partitionsum, numcontacts)
+                # free energy cutoff
+                if dG <= self._dGdependence:
+                    return (1.0, conf, partitionsum, numcontacts, folds)
+                else:
+                    return (self._nofitness, conf, partitionsum, numcontacts, folds)
 
     #---------------------------------------------------------------------
     def Stability(self, seq):
@@ -167,7 +170,7 @@ class Fitness(object):
             the dGf > dGdependence, dGf is just returned as 'None'.
         'dGf' is the free energy of folding of the sequence to the
             target conformation."""
-        (stability, conf, partitionsum, numcontacts) = self._Stability(seq)
+        (stability, conf, partitionsum, numcontacts, folds) = self._Stability(seq)
         return stability
 
     def _Stability(self, seq):
@@ -179,14 +182,14 @@ class Fitness(object):
             the dGf > dGdependence, dGf is just returned as 'None'.
         'dGf' is the free energy of folding of the sequence to the
             target conformation."""
-        (minE, conf, partitionsum, numcontacts) = self._NativeE(seq)
+        (minE, conf, partitionsum, numcontacts, folds) = self._NativeE(seq)
         # Calculate a stability... if calculation does not work, stability = 0
-        try:
+        if folds:
             gu = - self._temp * math.log(partitionsum - math.exp(-minE / self._temp))
             dGf = minE - gu
-            return (dGf, conf, partitionsum, numcontacts)
-        except:
-            return (0, conf, partitionsum, numcontacts)
+            return (dGf, conf, partitionsum, numcontacts, folds)
+        else:
+            return (0, conf, partitionsum, numcontacts, folds)
 
     #---------------------------------------------------------------------
     def Info(self, file = sys.stdout):

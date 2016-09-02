@@ -1,10 +1,10 @@
 // Begin contactlooper.c
-// This file contains a python module written by Jesse B)loom, 2004 
+// This file contains a python module written by Jesse B)loom, 2004
 // It is designed for executing fast loops in the analysis of lattice
 // protein conformation energies.
 //
 // The Python module name is 'contactlooper'
-// 
+//
 #include <Python.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,18 +39,19 @@ static PyObject *ContactLooperError;
 double *interactions;
 long *c_contactsets; // stores the contact sets.  The contacts for contact j
     // are the elements given by c_contactsets[i] where i >= c_contactstarts[j]
-    // and i < c_contactstarts[j + 1].  Each contact set is several integers. 
+    // and i < c_contactstarts[j + 1].  Each contact set is several integers.
     // x = c_contactsets[i] describes contact i; it has the value
-    // length * ires + jres where 0 <= ires, jres < length and ires < 
+    // length * ires + jres where 0 <= ires, jres < length and ires <
     // jres + 1.
-long *c_contactstarts; // stores starts of contact sets as described above 	
-long *c_contactsetdegeneracy; // stores the contact set degeneracies.  The 
+long *c_contactstarts; // stores starts of contact sets as described above
+long *c_contactsetdegeneracy; // stores the contact set degeneracies.  The
     // degeneracy for contact set j is c_contactsetdegeneracy[j]
 //
 // Function 'NoTargetLooper'
 static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
     PyObject *res_interactions, *contactsets, *contactsetdegeneracy, *cs;
-    PyObject *returntuple; 
+    PyObject *returntuple;
+    int single_native = 1;
     double temp, minE, e_contactset, partitionsum = 0.0;
     long ibest, numinteractions, i, j, contactindex, totalcontacts;
     static long interactionslength = 0; // stores length of 'interactions'
@@ -61,8 +62,8 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
 	return NULL;
     }
     // compute the number of interactions
-    numinteractions = PyList_GET_SIZE(res_interactions);	
-    // re-allocate global variables  
+    numinteractions = PyList_GET_SIZE(res_interactions);
+    // re-allocate global variables
     if (numinteractions != interactionslength) {
 	interactionslength = numinteractions;
 	if (interactions != NULL) {
@@ -82,7 +83,7 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
 	c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
 	totalcontacts = 0;
 	for (i = 0; i < numcontactsets; i++) {
-	    c_contactsetdegeneracy[i] = PyInt_AS_LONG(PyList_GET_ITEM(contactsetdegeneracy, i));	    
+	    c_contactsetdegeneracy[i] = PyInt_AS_LONG(PyList_GET_ITEM(contactsetdegeneracy, i));
 	    cs = PyList_GET_ITEM(contactsets, i);
 	    totalcontacts += PyList_GET_SIZE(cs);
 	}
@@ -92,42 +93,51 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
 	c_contactstarts[0] = 0;
 	for (i = 0; i < numcontactsets; i++) {
 	    cs = PyList_GET_ITEM(contactsets, i);
-	    for (j = 0; j < PyList_GET_SIZE(cs); j++) {		
-		c_contactsets[contactindex] = PyInt_AS_LONG(PyList_GET_ITEM(cs, j));
-		contactindex += 1;
+	    for (j = 0; j < PyList_GET_SIZE(cs); j++) {
+    		c_contactsets[contactindex] = PyInt_AS_LONG(PyList_GET_ITEM(cs, j));
+    		contactindex += 1;
 	    }
 	    c_contactstarts[i + 1] = contactindex;
 	}
     }
     // assign the values in res_interactions to interactions
     for (i = 0; i < numinteractions; i++) {
-	interactions[i] = PyFloat_AS_DOUBLE(PyList_GET_ITEM(res_interactions, i));
+	    interactions[i] = PyFloat_AS_DOUBLE(PyList_GET_ITEM(res_interactions, i));
     }
     // set initial values for minE and ibest
     e_contactset = 0.0;
     for (j = c_contactstarts[0]; j < c_contactstarts[1]; j++) {
-	e_contactset += interactions[c_contactsets[j]];
+	    e_contactset += interactions[c_contactsets[j]];
     }
     minE = e_contactset;
     ibest = 0;
     partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[0];
     // loop over remaining conformations to find the partition sum
-    for (i = 1; i < numcontactsets; i++) { 
-	e_contactset = 0.0;
-	for (j = c_contactstarts[i]; j < c_contactstarts[i + 1]; j++) {
-    	    e_contactset += interactions[c_contactsets[j]];
-	}
-	partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
-	if (e_contactset < minE) {
-	    minE = e_contactset;
-	    ibest = i;
-	}
-    }	
+    for (i = 1; i < numcontactsets; i++) {
+    	e_contactset = 0.0;
+    	for (j = c_contactstarts[i]; j < c_contactstarts[i + 1]; j++) {
+        	    e_contactset += interactions[c_contactsets[j]];
+    	}
+    	partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
+    	if (e_contactset < minE) {
+    	    minE = e_contactset;
+    	    ibest = i;
+            single_native = 1;
+    	} else if (e_contactset == minE){
+            // not a single native state.
+            single_native = 0;
+        }
+    }
     // Construct the return tuple and return it
-    returntuple = PyTuple_New(3);
-    PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE)); 
-    PyTuple_SET_ITEM(returntuple, 1, PyLong_FromLong(ibest)); 
+    returntuple = PyTuple_New(4);
+    PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE));
+    PyTuple_SET_ITEM(returntuple, 1, PyLong_FromLong(ibest));
     PyTuple_SET_ITEM(returntuple, 2, PyFloat_FromDouble(partitionsum));
+    if (single_native == 0){
+        PyTuple_SET_ITEM(returntuple, 3, Py_False);
+    } else {
+        PyTuple_SET_ITEM(returntuple, 3, Py_True);
+    }
     return returntuple;
 }
 //
@@ -137,23 +147,23 @@ static char NoTargetLooper_doc[] = "Evaluates a sequence on its lowest energy co
 // Function 'TargetLooper'
 static PyObject *TargetLooper(PyObject *self, PyObject *args) {
     PyObject *res_interactions, *contactsets, *contactsetdegeneracy, *cs;
-    PyObject *returntuple, *targetconf, *contactsetconformation; 
+    PyObject *returntuple, *targetconf, *contactsetconformation;
     int use_dGf_cutoff;
     double cutoff, temp, dGf_cutoff, minE = 0.0, e_contactset, partitionsum = 0.0;
     long numinteractions, i, j, contactindex, totalcontacts;
     static long interactionslength = 0; // stores length of 'interactions'
     static long numcontactsets = 0;
     static long targetconformationindex = 0;
-    static char *c_targetconf; 
+    static char *c_targetconf;
     char *targetconfstring;
-    // Parse the arguments 
-    if (! PyArg_ParseTuple(args, "O!O!O!dO!O!id", &PyList_Type, &res_interactions, &PyList_Type, &contactsets, &PyList_Type, &contactsetdegeneracy, &temp, &PyUnicode_Type, &targetconf, &PyList_Type, &contactsetconformation, &use_dGf_cutoff, &dGf_cutoff)) { 
-        PyErr_SetString(ContactLooperError, "Error parsing arguments."); 
+    // Parse the arguments
+    if (! PyArg_ParseTuple(args, "O!O!O!dO!O!id", &PyList_Type, &res_interactions, &PyList_Type, &contactsets, &PyList_Type, &contactsetdegeneracy, &temp, &PyUnicode_Type, &targetconf, &PyList_Type, &contactsetconformation, &use_dGf_cutoff, &dGf_cutoff)) {
+        PyErr_SetString(ContactLooperError, "Error parsing arguments.");
         return NULL;
     }
     // compute the number of interactions
     numinteractions = PyList_GET_SIZE(res_interactions);
-    // re-allocate global variables  
+    // re-allocate global variables
     if (numinteractions != interactionslength) {
         interactionslength = numinteractions;
         if (interactions != NULL) {
@@ -202,7 +212,7 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
         i = 0;
         while (! targetconformationindex) {
             if (i > numcontactsets) {
-                PyErr_SetString(ContactLooperError, "Did not find target conformations."); 
+                PyErr_SetString(ContactLooperError, "Did not find target conformations.");
                 return NULL;
             }
             if ((c_contactsetdegeneracy[i] == 1) && ! strcmp(c_targetconf, PyString_AS_STRING(PyList_GET_ITEM(contactsetconformation, i)))) {
@@ -236,19 +246,20 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
         }
     }
     else {
-        for (i = 0; i < numcontactsets; i++) { 
+        for (i = 0; i < numcontactsets; i++) {
             e_contactset = 0.0;
             for (j = c_contactstarts[i]; j < c_contactstarts[i + 1]; j++) {
                 e_contactset += interactions[c_contactsets[j]];
             }
             partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
         }
-    } 
+    }
     // Construct the return tuple and return it
-    returntuple = PyTuple_New(3);
-    PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE)); 
-    PyTuple_SET_ITEM(returntuple, 1, PyLong_FromLong(targetconformationindex)); 
+    returntuple = PyTuple_New(4);
+    PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE));
+    PyTuple_SET_ITEM(returntuple, 1, PyLong_FromLong(targetconformationindex));
     PyTuple_SET_ITEM(returntuple, 2, PyFloat_FromDouble(partitionsum));
+    PyTuple_SET_ITEM(returntuple, 3, Py_True);
     return returntuple;
 }
 //
@@ -264,9 +275,9 @@ static PyMethodDef contactlooper_methods[] = {{"NoTargetLooper", (PyCFunction) N
 // Initialization function for the module
 MOD_INIT(contactlooper){
     PyObject *m;
-    
+
     MOD_DEF(m, "contactlooper", contactlooper_doc, contactlooper_methods)
-        
+
     if (m == NULL)
         return MOD_ERROR_VAL;
 
@@ -274,7 +285,7 @@ MOD_INIT(contactlooper){
     if (ContactLooperError == NULL) {
     	PyErr_SetString(ContactLooperError, "Could not ready the 'ContactLooperError' type.");
     }
-    
+
     PyModule_AddObject(m, "ContactLooperError", ContactLooperError);
-    return MOD_SUCCESS_VAL(m);    
+    return MOD_SUCCESS_VAL(m);
 }

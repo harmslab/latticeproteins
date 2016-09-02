@@ -312,10 +312,11 @@ class Conformations(object):
             deleted from the list of saved sequences.  The sequences
             that are deleted are the ones that have been accessed
             the least frequenty since the last deletion of saved sequences.
-        The returned 4-tuple specifies the total energy of the native state,
+        The returned 5-tuple specifies the total energy of the native state,
             the conformation if there is a single unique lowest energy
             conformation, the boltzmann weighted partition function,
-            and the number of contacts in that conformation.  'dGf'
+            the number of contacts in that conformation, and if it `folds`
+            (i.e. True if it has single native state, False if not.).  'dGf'
             is the free energy of folding at temperature 'temp', computed
             from the partition function.  If there is a single
             lowest energy conformation, then 'conf' is a string
@@ -376,7 +377,7 @@ class Conformations(object):
         # first for the case where 'target_conf' is 'None':
         if target_conf == None:
             if _loop_in_C: # use the fast 'contactlooper' C-extension
-                (minE, ibest, partitionsum) = NoTargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
+                (minE, ibest, partitionsum, folds) = NoTargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
             else: # do the looping in python
                 # initially set minimum to the first contact set:
                 minE = 0.0
@@ -418,7 +419,7 @@ class Conformations(object):
             if minE == None:
                 raise ConformationsError("'target_conf' is not a unique conformation.")
             conf = target_conf
-        return minE, conf, partitionsum, numcontacts
+        return minE, conf, partitionsum, numcontacts, folds
 
     #------------------------------------------------------------------
     def UniqueConformations(self, numcontacts):
