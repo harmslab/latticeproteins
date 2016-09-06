@@ -170,11 +170,9 @@ class Fitness(object):
             the dGf > dGdependence, dGf is just returned as 'None'.
         'dGf' is the free energy of folding of the sequence to the
             target conformation."""
-        NativeE_results = self._NativeE(seq)
-        nativeE = NativeE_results[0]
-        otherinfo = NativeE_results[1:]
-        dG = self._Stability(nativeE, *otherinfo)
-        return dG
+        nativeE_results = self._NativeE(seq)
+        stability_results = self._Stability(*nativeE_results)
+        return stability_results[0]
 
     def _Stability(self, minE, conf, partitionsum, numcontacts, folds):
         """Computes a stability from minE and partition function.
