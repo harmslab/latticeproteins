@@ -1,8 +1,13 @@
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup
+except:
+    from distutils.core import setup
 
-contactlooper = Extension('latticeproteins.contactlooper', sources = ['src/contactlooper.c'])
+from distutils.extension import Extension
 
-setup (name = 'latticeproteins', 
+contactlooper = Extension('latticeproteins.contactlooper', sources = ['latticeproteins/contactlooper.c'])
+
+setup (name = 'latticeproteins',
        fullname = 'Lattice Protein Simulation Package',
        version = '0.1',
        author = 'Jesse D. Bloom',
@@ -10,6 +15,5 @@ setup (name = 'latticeproteins',
        description = 'Code for lattice protein simulations.',
        platforms = 'Tested on Mac OS X and Linux',
        packages = ['latticeproteins'],
-       package_dir = {'latticeproteins' : 'src'},
        ext_modules = [contactlooper]
 )
