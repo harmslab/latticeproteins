@@ -191,7 +191,12 @@ def NeutralEvolution(initialpop, stability, stabilitycutoff, popsize, mutrate, n
     finalsubs = [prot[2] for prot in population]
     return (finalpop, finalstabs, finalsubs)
 #----------------------------------------------------------------------
-def Evolution(initialpop, fitness, popsize, mutrate, numsteps, file = sys.stdout, targetfunction = None, allproteinsfile = None, dGincrement = 0.02, dGlist = None):
+def Evolution(initialpop, fitness, popsize, mutrate, numsteps, 
+    file=sys.stdout,
+    targetfunction=None,
+    allproteinsfile=None,
+    dGincrement=0.02,
+    dGlist=None):
     """Performs evolution of lattice proteins.
 
     Call is: 'finalpop = Evolution(fitness, popsize, mutrate,
@@ -256,7 +261,7 @@ def Evolution(initialpop, fitness, popsize, mutrate, numsteps, file = sys.stdout
         ('file = sys.stdout').  If 'file' is set to an open writable
         file-like object, then output is printed to that object instead.
         If 'file' is set to 'None', then no output is printed.
-    targetfunction :
+    targetfunction : tuple or None
         is an optional argument that tells us to stop when
         the evolutionary run reaches some target, rather than going for
         'numsteps' steps.  By default, 'targetfunction' is 'None'.  To
@@ -269,14 +274,16 @@ def Evolution(initialpop, fitness, popsize, mutrate, numsteps, file = sys.stdout
         the evolutionary run stops and 'seq' is returned as 'finalpop'.
         If the target is not reached in 'numsteps' steps, an exception
         is raised.
-    allproteinsfile :
+    allproteinsfile : file object
         is an optional argument that specifies that we write
         data giving the details of all proteins in the population at each
         step of evolution.  The default value is 'None', meaning nothing
         is written.  If it is set to a non-'None', it should be set to
         a writable file-like object.  The data is then written to
         this file, along with an explanatory header.
-    dGincrement :
+    dGincrement : int
+        binsize for internal stability histogram. see next argument.
+    dGlist : list
         and 'dGlist' allow the program to keep track of
         the stabilities of all of the proteins generated during the
         course of the evolutionary run.  This is done by passing

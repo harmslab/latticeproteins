@@ -3,3 +3,6 @@
 Uses 2-dimensional non-compact models.
 
 Written by Jesse Bloom."""
+
+
+from . conformations import Conformations
