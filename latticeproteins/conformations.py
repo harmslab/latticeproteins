@@ -24,19 +24,17 @@ _loop_in_C = True
 if _loop_in_C:
     from latticeproteins.contactlooper import NoTargetLooper, TargetLooper
 
-
 class PickleProtocolError(Exception):
     """Error is pickle version is too old. """
 
 PROTOCOL = pickle.HIGHEST_PROTOCOL
 if PROTOCOL < 2:
     raise PickleProtocolError("Version of pickle is outdated for this package. ")
-
 #------------------------------------------------------------------------
 class Conformations(object):
     """A class for storing all of the conformations of a lattice protein."""
     #-------------------------------------------------------------------
-    def __init__(self, length, database_dir, interaction_energies=miyazawa_jernigan):
+    def __init__(self, length, database_dir="database/", interaction_energies=miyazawa_jernigan):
         """Creates a list of conformations for a protein of specified length.
 
         Call is: 'c = Conformations(length, database_file)
@@ -55,7 +53,8 @@ class Conformations(object):
             the lowest energy conformation."""
         self._interaction_energies = interaction_energies
         if not os.path.isdir(database_dir):
-            raise IOError("Cannot find database directory of %s." % database_dir)
+            os.makedirs(database_dir)
+            #raise IOError("Cannot find database directory of %s." % database_dir)
         object_properties = ['_length', '_numconformations', '_contactsets', '_contactsetdegeneracy', '_contactsetconformation', '_numcontactsets']
         foundone = didntfindone = False
         for prop in object_properties:

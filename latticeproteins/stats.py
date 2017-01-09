@@ -1,10 +1,10 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 # Begin stats.py
 """Module for statistics.
 
 Written by Jesse Bloom."""
 #
-import re, math, os, string, random 
+import re, math, os, string, random
 try:
     import numarray.fft
 except ImportError:
@@ -40,7 +40,7 @@ def DistWidth(xlist, frac, accuracy = 1.0e-6):
     #-----------------------------------------------------
     def NumWithin(min, max, xdata):
         """Returns number of entries in 'xdata' between 'min' and 'max'.
-        
+
         'xdata' is sorted."""
         for i in range(len(xdata)):
             if xdata[i] >= min:
@@ -57,7 +57,7 @@ def DistWidth(xlist, frac, accuracy = 1.0e-6):
         toomany = False
     while True:
         if toomany:
-            w -= step 
+            w -= step
             if NumWithin(mean - w, mean + w, xdata) <= nwithin:
                 if step < accuracy:
                     break
@@ -65,7 +65,7 @@ def DistWidth(xlist, frac, accuracy = 1.0e-6):
                     toomany = not toomany
                     step /= 2.0
         else:
-            w += step 
+            w += step
             if NumWithin(mean - w, mean + w, xdata) >= nwithin:
                 if step < accuracy:
                     break
@@ -96,7 +96,7 @@ def List_of_Tuples_to_Tuple_of_Lists(xlist):
         ilist = []
         for tup in xlist:
             ilist.append(tup[i])
-        assert len(ilist) == len(xlist) 
+        assert len(ilist) == len(xlist)
         list_of_lists.append(ilist)
     assert len(list_of_lists) == n
     return tuple(list_of_lists)
@@ -108,7 +108,7 @@ def Write_Columns(filename, *data_lists):
     An arbitrary number of lists can be specified.  Writes each list as
         a column, in the order they are given, to 'filename'.
     A list can be specified alone as a list, or in a 2-tuple
-        as '(title, list)' where title is a title printed in a title line 
+        as '(title, list)' where title is a title printed in a title line
         (beginning with a '#') for that list.  If one list has a title,
         all must have them.
     Finally, any lists that are passed as the 2-tuple
@@ -179,19 +179,19 @@ def Make_Bins(data, binsize = None, numbins = None, numbins_10_90 = None, min_ma
 
     On call, 'data' is a list of numbers specifying the data.
     Any values of 'None' in the data list are discarded.
-    The data is binned either so all bins are of a specified size, 
+    The data is binned either so all bins are of a specified size,
         or that there are a specified number of bins.  If all bins are
         all the same size, 'binsize' is this size. If there are
-        to be a specified number of bins, 'numbins' is this value.  
+        to be a specified number of bins, 'numbins' is this value.
         Only one of 'numbins' or 'binsize' should be specified.
-    For both the 'binsize' and 'numbins' options, the user can specify 
-        the minimum of the smallest bins and the maximum of 
+    For both the 'binsize' and 'numbins' options, the user can specify
+        the minimum of the smallest bins and the maximum of
         the largest bin in the 'min_max' (example, 'min_max = (0, 4)'
         means the smallest bin has minimum 0, and the largest bin
         bin has maximum 4.  If 'binsize' is chosen, the maximum
         value is adjusted upward to make it consistent with the bin sizes.
     'numbins_10_90' is like 'numbins', but the bin size is chosen so that
-        there are 'numbins_10_90' bins between the 10th and 90th 
+        there are 'numbins_10_90' bins between the 10th and 90th
         percentiles of the data.
     Upper bin boundaries are less than, lower boundaries are >=.
     The function returns a 4-tuple: (bincounts, bincenter, binmin, binmax)
@@ -200,7 +200,7 @@ def Make_Bins(data, binsize = None, numbins = None, numbins_10_90 = None, min_ma
         the center of bin 'i', 'binmin[i]' is the lower limit
         of bin i, and 'binmax[i]' is the upper limit of bin 'i'.
     If there is a problem, the function returns 'None'.
-    If 'gnuplot_file' is set to a value other than 'None', 
+    If 'gnuplot_file' is set to a value other than 'None',
         it should be a string representing a filename.  This
         This file is then created, with the data in gnuplot format."""
     assert isinstance(data, list)
@@ -289,7 +289,7 @@ def Make_Bins(data, binsize = None, numbins = None, numbins_10_90 = None, min_ma
 #------------------------------------------------------------------------
 def StatsSummary(numlist):
     """Returns summary one-variable statistics for a list of numbers.
-    
+
     Call is: '(mean, median, sd, n) = StatsSummary(numlist)'
     Any entries of 'None' or '-' are removed.
     If there are one or zero data points, just returns the number of
@@ -303,7 +303,7 @@ def StatsSummary(numlist):
 #-------------------------------------------------------------------------
 def Median(numlist):
     """Returns the median of a list of numbers.
-    
+
     If any entries of the list are 'None' or '-', they are removed first."""
     assert isinstance(numlist, list)
     xlist = []  # make a copy of the list
@@ -319,15 +319,15 @@ def Median(numlist):
     xlist.sort()
     n = len(xlist)
     if n % 2 == 0: # even length list, average two middle entries
-        med = xlist[n / 2] + xlist[n / 2 - 1]
+        med = xlist[int(n / 2)] + xlist[int(n / 2) - 1]
         med = float(med) / 2.0
         return med
     else: # odd length list, get middle entry
-        return xlist[n / 2]
+        return xlist[int(n / 2)]
 #--------------------------------------------------------------------------
 def Mean(numlist):
     """Returns the mean of a list of numbers.
-    
+
     If any entries of the list are 'None' or '-', they are removed first."""
     mean = 0.0
     n = 0
@@ -363,7 +363,7 @@ def Variance(numlist):
         raise StatsError( "Empty list.")
     var = mean2 - mean * mean
     assert var >= -0.00000001
-    return var 
+    return var
 #------------------------------------------------------------------------
 def StandardDeviation(numlist):
     """Returns the standard deviation of a list of numbers.
@@ -374,14 +374,14 @@ def StandardDeviation(numlist):
 def Read_Numeric_Columns(filename, columnlist):
     """Returns numbers in columns of the indicated file.
 
-    'filename' is a file containing columns of numeric entries, with 
+    'filename' is a file containing columns of numeric entries, with
         the columns separated by whitespace.
-    'columnlist' is a list of the columns for which we want to 
+    'columnlist' is a list of the columns for which we want to
         get entries.  The columns range from 1 to n (NOT ZERO TO n).
-    For all rows of the file that contain numeric entries in all of the 
-        columns indicated in 'columnlist', creates lists of the entries in 
-        the columns and returns them as a list: [columnX, columnY, ...] 
-        where the columns in the list correspond to those given in 
+    For all rows of the file that contain numeric entries in all of the
+        columns indicated in 'columnlist', creates lists of the entries in
+        the columns and returns them as a list: [columnX, columnY, ...]
+        where the columns in the list correspond to those given in
         'columnlist'. Note that rows without numeric entries in all
         of the indicated columns are disregarded.
     Returns an empty list if nothing can be read."""
@@ -396,7 +396,7 @@ def Read_Numeric_Columns(filename, columnlist):
             raise StatsError("Entry %r is not a valid column index." % columnlist[i])
     # Get column entries
     file = open(filename, 'r')
-    firstitems = True 
+    firstitems = True
     digitmatch = re.compile(r"^\-{0,1}[\d\.]+$")
     while True: # read lines from columns
         line = file.readline()
@@ -414,7 +414,7 @@ def Read_Numeric_Columns(filename, columnlist):
             if firstitems:
                 for column in columnlist:
                     columns.append([])
-                firstitems = False 
+                firstitems = False
             for column in range(len(row)):
                 columns[column].append(row[column])
     file.close()
@@ -423,13 +423,13 @@ def Read_Numeric_Columns(filename, columnlist):
 def Kendalls_Tau(xlist, ylist):
     """Calculates Kendall's tau non-parametric correlation.
 
-    The input data is given in the two lists 'xdata' and 'ydata' which should be 
+    The input data is given in the two lists 'xdata' and 'ydata' which should be
         of the same length.  If entry i of either list is 'None', this entry is
         disregarded in both lists.
     Returns Kendall's partial tau, the one-tailed P-value, and the number of
         data points as a tuple: (tau, P, N).
     Includes a correction for ties.
-    Based on Gibbons, JD, "Nonparametric measures of association", 
+    Based on Gibbons, JD, "Nonparametric measures of association",
         Sage University Papers, pg 15 (1983)."""
     if len(xlist) != len(ylist):
         raise StatsError("Data lists are of different length.")
@@ -468,13 +468,13 @@ def Kendalls_Tau(xlist, ylist):
         xcopy.append(xdata[i])
         ycopy.append(ydata[i])
     xties = yties = 0.0
-    while xcopy: 
+    while xcopy:
         xi = xcopy[0]
         t = xcopy.count(xi)
         xties = xties + t * t - t
         while xcopy.count(xi) > 0:
             xcopy.remove(xi)
-    while ycopy: 
+    while ycopy:
         yi = ycopy[0]
         t = ycopy.count(yi)
         yties = yties + t * t - t
@@ -498,7 +498,7 @@ def Kendalls_Partial_Tau(xdata, ydata, zdata):
     The correlation is between 'xdata' and 'ydata' controlling for 'zdata'.
         The data is given in lists that must be of the same length.
     Returns partial tau as a scalar number.
-    Based on Gibbons JD, "Nonparametric measures of associations", 
+    Based on Gibbons JD, "Nonparametric measures of associations",
         Sage University Papers, pg 49 (1983)."""
     if not len(xdata) == len(ydata) == len(zdata):
         raise StatsError("Data sets are of different lengths.")
@@ -548,12 +548,12 @@ def LinearRegression(xdata, ydata):
 #----------------------------------------------------------------------------
 def PearsonCorrelation(xdata, ydata):
     """Computes the Pearson linear correlation between two data sets.
-   
+
     Call is '(r, p, n) = PearsonCorrelation(xdata, ydata)'
     The input data is given in the two lists 'xdata' and 'ydata' which should
         be of the same length.  If entry i of either list is 'None', this
         entry is disregarded in both lists.
-    Returns Pearson's correlation coefficient, the two-tailed P-value, 
+    Returns Pearson's correlation coefficient, the two-tailed P-value,
         and the number of data points as a tuple '(r, p, n)'."""
     if len(xdata) != len(ydata):
         raise StatsError("Data sets are of different lengths.")
@@ -589,13 +589,13 @@ def Complementary_Error_Function(z):
     """Calculates the error function of z.
 
     The complementary error function of z is defined as:
-        erfc(z) = 2 / sqrt(pi) * integral(e^(t^2) dt) where the integral 
+        erfc(z) = 2 / sqrt(pi) * integral(e^(t^2) dt) where the integral
         is from z to infinity.
-    Can be used to calculate cumulative normal probabilities: given a 
+    Can be used to calculate cumulative normal probabilities: given a
         distribution with mean m and standard deviation s,
-        the probability of observing x > m  when x > 0 is: 
+        the probability of observing x > m  when x > 0 is:
         P = 0.5 * erfc((x - m) / (s * sqrt(2)))
-    Calculated according to Chebyshev fitting given by Numerical Recipes 
+    Calculated according to Chebyshev fitting given by Numerical Recipes
         in C, page 220-221."""
     x = math.fabs(z)
     t = 1.0 / (1.0 + 0.5 * x)
@@ -608,7 +608,7 @@ def Complementary_Error_Function(z):
 def Poisson(n, k):
     """Returns the Poisson probability of observing a number.
 
-    'Poisson(n, k)' takes as input an integer n >= 0 and a 
+    'Poisson(n, k)' takes as input an integer n >= 0 and a
         real number k >= 0.0.  Returns p, the probability of
         getting n counts when the average outcome is k, according
         to the Possion distribution.  Returns 'None' if there is
@@ -698,7 +698,7 @@ def CumDistFromProbDist(x, p, gnuplot_file = None):
 def RebinProbDist(x, p, old_dx, new_dx, gnuplot_file = None):
     """Rebins a probability distribution with larger bin sizes.
 
-    Call is: '(xn, pn) = RebinProbDist(x, p, old_dx, new_dx, 
+    Call is: '(xn, pn) = RebinProbDist(x, p, old_dx, new_dx,
         [gnuplot_file = None])'
     'x' and 'p' specify a probability distribution, with 'p[x[i]]' being
         the probability that a function has a value of 'x[i]', and
@@ -707,8 +707,8 @@ def RebinProbDist(x, p, old_dx, new_dx, gnuplot_file = None):
         specified by 'x' and 'p'.  The bin sizes must be uniform.
     'new_dx' is the bin size for the new re-binned distribution.  It
         must be larger than 'old_dx'.
-    The returned variable is the 2-tuple '(xn, pn)'.  'xn' and 'pn' 
-        specify a new probability distribution with bin size of 
+    The returned variable is the 2-tuple '(xn, pn)'.  'xn' and 'pn'
+        specify a new probability distribution with bin size of
         'new_dx'.
     'gnuplot_file' specifies the name of the file we write this data to for
         plotting.  If it is 'None', the data is not written to a file;
@@ -753,7 +753,7 @@ def ProbLessThan(x, x1, p1):
         return 0.0
     slope = float(p1[i] - p1[i - 1]) / (x1[i] - x1[i - 1])
     intercept = p1[i] - slope * x1[i]
-    return x * slope + intercept 
+    return x * slope + intercept
 #-------------------------------------------------------------------
 def EstimateNSum(xlist, n, nestimate = None):
     """Estimates the sum of n independent random variables.
@@ -785,7 +785,7 @@ def ProbDistribution(xlist, numbins_10_90 = 10, gnuplot_file = None):
         numbers are drawn.
     'xlist' is a list of numbers drawn from some distribution.
     The returned variable is the 3-tuple '(x, p, dx)'.  'x' and 'p'
-        are both lists, while 'dx' is a number.  'p[i]' is the 
+        are both lists, while 'dx' is a number.  'p[i]' is the
         probability that a variable in the distribution is
         >= 'x[i] - dx / 2', and <= 'x[i] + dx / 2'.
     'numbins_10_90' is used to specify the bin sizes, 'dx'.  The bin size
@@ -821,7 +821,7 @@ def SumOfVariables(x, p, n, gnuplot_file = None):
         with 'x[i] - x[i + 1] = dx' where 'dx' is a constant > 0.
     'n' is the number of variables that are added.
     The returned 2-tuple, '(xsum, psum)', gives the probability distribution
-        for a variable that is the sum of 'n' variables drawn from the 
+        for a variable that is the sum of 'n' variables drawn from the
         distribution specified by 'x' and 'p'.  'psum[xsum[i]]' is the
         probability that the sum has the value 'xsum[i]'.
     'gnuplot_file' specifies the name of the file we write this data to for
@@ -899,7 +899,7 @@ def KolmogorovSmirnov(x1, x2):
         drawn from different distributions.
     'x1' and 'x2' are lists of numbers drawn from distributions 1 and 2.
     The returned value is the 2-tuple '(d, p)'.  'd' is the maximum distance
-        between the two cumulative probability distributions.  'p' is 
+        between the two cumulative probability distributions.  'p' is
         the probability that we would observe this value of 'd' if the
         numbers were drawn from the same underlying distribution.
     Based on Numerical Recipes, 14.3."""
@@ -910,11 +910,11 @@ def KolmogorovSmirnov(x1, x2):
     n1 = float(len(y1))
     n2 = float(len(y2))
     d = fn1 = fn2 = 0.0
-    i1 = i2 = 1 
+    i1 = i2 = 1
     # find 'd'
     while i1 <= n1 and i2 <= n2:
         dy = y1[i1 - 1] - y2[i2 - 1]
-        if dy <= 0: 
+        if dy <= 0:
             fn1 = i1 / n1
             i1 += 1
         if dy >= 0:
@@ -1065,7 +1065,7 @@ def MakeGnuplotGraph(plotfile, outfile = None, extension = ".eps", fileformat = 
     'arrows' is a list indicating that we draw arrows.  Each entry in
         the list specifies an arrow.  The entries are 6-tuples where
         the first two items are the X and Y coordinates of the arrow's
-        origin, the next two items are the X and Y coordinates of 
+        origin, the next two items are the X and Y coordinates of
         the arrow's end, and the next item is the line type, and the
         next item is the line width."""
     if not os.path.isfile(plotfile):
