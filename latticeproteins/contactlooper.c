@@ -65,44 +65,45 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
     }
     // compute the number of interactions
     numinteractions = PyList_GET_SIZE(res_interactions);
-	interactionslength = numinteractions;
 
-    /*
-	if (interactions != NULL) {
-	    free(interactions);
-	}
-	if (c_contactsets != NULL) {
-	    free(c_contactsets);
-	}
-	if (c_contactstarts != NULL) {
-	    free(c_contactstarts);
-	}
-	if (c_contactsetdegeneracy != NULL) {
-	    free(c_contactsetdegeneracy);
-	}
-    */
+    if (numinteractions != interactiosnlength) {
+        interactionslength = numinteractions;
+        /*
+    	if (interactions != NULL) {
+    	    free(interactions);
+    	}
+    	if (c_contactsets != NULL) {
+    	    free(c_contactsets);
+    	}
+    	if (c_contactstarts != NULL) {
+    	    free(c_contactstarts);
+    	}
+    	if (c_contactsetdegeneracy != NULL) {
+    	    free(c_contactsetdegeneracy);
+    	}
+        */
 
-	interactions = (double *) malloc(interactionslength * sizeof(double));
-	numcontactsets = PyList_GET_SIZE(contactsets);
-	c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
-	totalcontacts = 0;
-	for (i = 0; i < numcontactsets; i++) {
-	    c_contactsetdegeneracy[i] = PyInt_AS_LONG(PyList_GET_ITEM(contactsetdegeneracy, i));
-	    cs = PyList_GET_ITEM(contactsets, i);
-	    totalcontacts += PyList_GET_SIZE(cs);
-	}
-	c_contactsets = (long *) malloc(totalcontacts * sizeof(long));
-	c_contactstarts = (long *) malloc((numcontactsets + 1) * sizeof(long));
-	contactindex = 0;
-	c_contactstarts[0] = 0;
-	for (i = 0; i < numcontactsets; i++) {
-	    cs = PyList_GET_ITEM(contactsets, i);
-	    for (j = 0; j < PyList_GET_SIZE(cs); j++) {
-    		c_contactsets[contactindex] = PyInt_AS_LONG(PyList_GET_ITEM(cs, j));
-    		contactindex += 1;
-	    }
-	    c_contactstarts[i + 1] = contactindex;
-	}
+    	interactions = (double *) malloc(interactionslength * sizeof(double));
+    	numcontactsets = PyList_GET_SIZE(contactsets);
+    	c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
+    	totalcontacts = 0;
+    	for (i = 0; i < numcontactsets; i++) {
+    	    c_contactsetdegeneracy[i] = PyInt_AS_LONG(PyList_GET_ITEM(contactsetdegeneracy, i));
+    	    cs = PyList_GET_ITEM(contactsets, i);
+    	    totalcontacts += PyList_GET_SIZE(cs);
+    	}
+    	c_contactsets = (long *) malloc(totalcontacts * sizeof(long));
+    	c_contactstarts = (long *) malloc((numcontactsets + 1) * sizeof(long));
+    	contactindex = 0;
+    	c_contactstarts[0] = 0;
+    	for (i = 0; i < numcontactsets; i++) {
+    	    cs = PyList_GET_ITEM(contactsets, i);
+    	    for (j = 0; j < PyList_GET_SIZE(cs); j++) {
+        		c_contactsets[contactindex] = PyInt_AS_LONG(PyList_GET_ITEM(cs, j));
+        		contactindex += 1;
+    	    }
+    	    c_contactstarts[i + 1] = contactindex;
+    	}
     }
     // assign the values in res_interactions to interactions
     for (i = 0; i < numinteractions; i++) {
@@ -276,14 +277,10 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
             partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
         }
     }
-
     free(interactions);
     free(c_contactsetdegeneracy);
     free(c_contactsets);
     free(c_contactstarts);
-
-
-
     // Construct the return tuple and return it
     returntuple = PyTuple_New(4);
     PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE));
