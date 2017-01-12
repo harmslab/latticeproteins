@@ -35,17 +35,6 @@
 // 'ContactLooper' error for module
 static PyObject *ContactLooperError;
 //
-// global variables
-double *interactions;
-long *c_contactsets; // stores the contact sets.  The contacts for contact j
-    // are the elements given by c_contactsets[i] where i >= c_contactstarts[j]
-    // and i < c_contactstarts[j + 1].  Each contact set is several integers.
-    // x = c_contactsets[i] describes contact i; it has the value
-    // length * ires + jres where 0 <= ires, jres < length and ires <
-    // jres + 1.
-long *c_contactstarts; // stores starts of contact sets as described above
-long *c_contactsetdegeneracy; // stores the contact set degeneracies.  The
-    // degeneracy for contact set j is c_contactsetdegeneracy[j]
 //
 // Function 'NoTargetLooper'
 static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
@@ -56,6 +45,19 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
     long ibest, numinteractions, i, j, contactindex, totalcontacts;
     static long interactionslength = 0; // stores length of 'interactions'
     static long numcontactsets = 0;
+
+    double *interactions;
+    long *c_contactsets; // stores the contact sets.  The contacts for contact j
+    // are the elements given by c_contactsets[i] where i >= c_contactstarts[j]
+    // and i < c_contactstarts[j + 1].  Each contact set is several integers.
+    // x = c_contactsets[i] describes contact i; it has the value
+    // length * ires + jres where 0 <= ires, jres < length and ires <
+    // jres + 1.
+    long *c_contactstarts; // stores starts of contact sets as described above
+    long *c_contactsetdegeneracy; // stores the contact set degeneracies.  The
+    // degeneracy for contact set j is c_contactsetdegeneracy[j]
+
+
     // Parse the arguments
     if (! PyArg_ParseTuple(args, "O!O!O!d", &PyList_Type, &res_interactions, &PyList_Type, &contactsets, &PyList_Type, &contactsetdegeneracy, &temp)) {
 	PyErr_SetString(ContactLooperError, "Error parsing arguments.");
@@ -63,9 +65,9 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
     }
     // compute the number of interactions
     numinteractions = PyList_GET_SIZE(res_interactions);
-    // re-allocate global variables
-    if (numinteractions != interactionslength) {
 	interactionslength = numinteractions;
+
+    /*
 	if (interactions != NULL) {
 	    free(interactions);
 	}
@@ -78,6 +80,8 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
 	if (c_contactsetdegeneracy != NULL) {
 	    free(c_contactsetdegeneracy);
 	}
+    */
+
 	interactions = (double *) malloc(interactionslength * sizeof(double));
 	numcontactsets = PyList_GET_SIZE(contactsets);
 	c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
@@ -254,6 +258,14 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
             partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
         }
     }
+
+    free(interactions);
+    free(c_contactsetdegeneracy); 
+    free(c_contactsets); 
+    free(c_contactstarts); 
+
+
+
     // Construct the return tuple and return it
     returntuple = PyTuple_New(4);
     PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE));
