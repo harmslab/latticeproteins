@@ -279,7 +279,7 @@ class Conformations(object):
         Call is: 'length = c.Length()'."""
         return self._length
     #------------------------------------------------------------------
-    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6):
+    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6, loop_in_C=False):
         """Folds a protein sequence, calculate native energy and partition sum.
 
         Call is: 'minE, conf, partitionsum, numcontacts = c.FoldSequence(seq, temp,
@@ -375,10 +375,11 @@ class Conformations(object):
         # we write out separate loops for the two possible value of 'target_conf'
         # first for the case where 'target_conf' is 'None':
         if target_conf == None:
-            if _loop_in_C: # use the fast 'contactlooper' C-extension
+            if loop_in_C: # use the fast 'contactlooper' C-extension
                 (minE, ibest, partitionsum, folds) = NoTargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
             else: # do the looping in python
                 # initially set minimum to the first contact set:
+                folds = True
                 minE = 0.0
                 for pair in contactsets[0]:
                     minE += res_interactions[pair]
@@ -393,11 +394,14 @@ class Conformations(object):
                     if e_contactset < minE:
                         minE = e_contactset
                         ibest = i
+                        folds = True
+                    elif e_contactset == minE:
+                        folds = False
             conf = contactsetconformation[ibest]
             numcontacts = len(contactsets[ibest])
         # now for the case where 'target_conf' is a conformation
         else:
-            if _loop_in_C: # use the fast 'contactlooper' C-extension
+            if loop_in_C: # use the fast 'contactlooper' C-extension
                 if dGf_cutoff != None:
                     (minE, ibest, partitionsum) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 1, float(dGf_cutoff))
                 else:
