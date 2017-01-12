@@ -66,7 +66,7 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
     // compute the number of interactions
     numinteractions = PyList_GET_SIZE(res_interactions);
 
-    if (numinteractions != interactiosnlength) {
+    if (numinteractions != interactionslength) {
         interactionslength = numinteractions;
         /*
     	if (interactions != NULL) {
