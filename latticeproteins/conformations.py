@@ -279,7 +279,7 @@ class Conformations(object):
         Call is: 'length = c.Length()'."""
         return self._length
     #------------------------------------------------------------------
-    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6, loop_in_C=False):
+    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6, loop_in_C=True):
         """Folds a protein sequence, calculate native energy and partition sum.
 
         Call is: 'minE, conf, partitionsum, numcontacts = c.FoldSequence(seq, temp,
