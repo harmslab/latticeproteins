@@ -68,7 +68,6 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
 
     if (numinteractions != interactionslength) {
         interactionslength = numinteractions;
-        /*
     	if (interactions != NULL) {
     	    free(interactions);
     	}
@@ -81,8 +80,6 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
     	if (c_contactsetdegeneracy != NULL) {
     	    free(c_contactsetdegeneracy);
     	}
-        */
-
     	interactions = (double *) malloc(interactionslength * sizeof(double));
     	numcontactsets = PyList_GET_SIZE(contactsets);
     	c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
@@ -133,10 +130,10 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
             single_native = 0;
         }
     }
-    free(interactions);
-    free(c_contactsetdegeneracy);
-    free(c_contactsets);
-    free(c_contactstarts);
+    free(interactions); interactions = NULL;
+    free(c_contactsetdegeneracy); c_contactsetdegeneracy = NULL;
+    free(c_contactsets); c_contactsets = NULL;
+    free(c_contactstarts); c_contactstarts = NULL;
     // Construct the return tuple and return it
     returntuple = PyTuple_New(4);
     PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE));
@@ -187,7 +184,6 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
     // re-allocate global variables
     if (numinteractions != interactionslength) {
         interactionslength = numinteractions;
-        /*
         if (interactions != NULL) {
             free(interactions);
         }
@@ -200,7 +196,6 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
         if (c_contactsetdegeneracy != NULL) {
             free(c_contactsetdegeneracy);
         }
-        */
         interactions = (double *) malloc(interactionslength * sizeof(double));
         numcontactsets = PyList_GET_SIZE(contactsets);
         c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
@@ -277,10 +272,10 @@ static PyObject *TargetLooper(PyObject *self, PyObject *args) {
             partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
         }
     }
-    free(interactions);
-    free(c_contactsetdegeneracy);
-    free(c_contactsets);
-    free(c_contactstarts);
+    free(interactions); interactions = NULL;
+    free(c_contactsetdegeneracy); c_contactsetdegeneracy = NULL;
+    free(c_contactsets); c_contactsets = NULL;
+    free(c_contactstarts); c_contactstarts = NULL;
     // Construct the return tuple and return it
     returntuple = PyTuple_New(4);
     PyTuple_SET_ITEM(returntuple, 0, PyFloat_FromDouble(minE));
