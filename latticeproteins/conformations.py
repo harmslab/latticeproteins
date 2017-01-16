@@ -22,7 +22,7 @@ class ConformationsError(Exception):
 # 'contactlooper'.  'True' means we try to do this.
 _loop_in_C = True
 if _loop_in_C:
-    from latticeproteins.contactlooper import NoTargetLooper, TargetLooper
+    from latticeproteins.contactlooper import NoTargetLooper #, TargetLooper
 
 class PickleProtocolError(Exception):
     """Error is pickle version is too old. """
@@ -377,6 +377,10 @@ class Conformations(object):
         if target_conf == None:
             if loop_in_C: # use the fast 'contactlooper' C-extension
                 (minE, ibest, partitionsum, folds) = NoTargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
+                if folds is 1:
+                    folds = True
+                else:
+                    folds = False
             else: # do the looping in python
                 # initially set minimum to the first contact set:
                 folds = True
@@ -470,7 +474,7 @@ class Conformations(object):
             of contacts, returns 0."""
         if contacts == None:
             n = 0
-            for x in self._numconformations.itervalues():
+            for x in self._numconformations.values():
                 n += x
         else:
             try:
