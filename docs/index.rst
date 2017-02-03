@@ -6,6 +6,9 @@
 Introduction
 ============
 
+The LatticeGPM package constructs genotype-phenotype obejcts
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

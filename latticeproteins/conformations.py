@@ -22,7 +22,7 @@ class ConformationsError(Exception):
 # 'contactlooper'.  'True' means we try to do this.
 _loop_in_C = True
 if _loop_in_C:
-    from latticeproteins.contactlooper import NoTargetLooper #, TargetLooper
+    from latticeproteins.contactlooper import NoTargetLooper , TargetLooper
 
 class PickleProtocolError(Exception):
     """Error is pickle version is too old. """
@@ -406,11 +406,14 @@ class Conformations(object):
         # now for the case where 'target_conf' is a conformation
         else:
             if loop_in_C: # use the fast 'contactlooper' C-extension
-                if dGf_cutoff != None:
-                    (minE, ibest, partitionsum) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 1, float(dGf_cutoff))
-                else:
-                    (minE, ibest, partitionsum) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 0, 0.0)
+                #if dGf_cutoff != None:
+                #    print(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation)
+                #    (minE, partitionsum) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 1, float(dGf_cutoff))
+                #else:
+                (minE, ibest, partitionsum, k) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 0, 0.0)
+                print(k)
                 numcontacts = len(contactsets[ibest])
+                folds = True
             else: # do the looping in python
                 minE = conf = numcontacts = None # lowest energy sequence properties
                 for i in range(len(self._contactsets)):
@@ -423,6 +426,7 @@ class Conformations(object):
                     if target_conf == contactsetconformation[i]:
                         minE = e_contactset
                         numcontacts = len(contactsets[i])
+                folds = True
             if minE == None:
                 raise ConformationsError("'target_conf' is not a unique conformation.")
             conf = target_conf
