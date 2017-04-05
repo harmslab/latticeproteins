@@ -113,7 +113,7 @@ class Fitness(object):
             raise FitnessError("Invalid 'seq' of %r." % seq)
         if isinstance(self._targets, str):
             # folding to a target conformation
-            return self._conformations.FoldSequence(seq, self._temp, self._targets)
+            return self._conformations.FoldSequence(seq, self._temp, target_conf=self._targets)
         else:
             # folding to lowest energy conformation
             return self._conformations.FoldSequence(seq, self._temp)

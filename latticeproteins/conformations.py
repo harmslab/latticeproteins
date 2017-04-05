@@ -7,6 +7,7 @@ Written by Jesse Bloom, 2004."""
 #-----------------------------------------------------------------------
 import math, sys, os
 from latticeproteins.interactions import miyazawa_jernigan
+from latticeproteins.thermodynamics import fold_energy
 
 # Python 3 compatibility
 try:
@@ -22,7 +23,7 @@ class ConformationsError(Exception):
 # 'contactlooper'.  'True' means we try to do this.
 _loop_in_C = True
 if _loop_in_C:
-    from latticeproteins.contactlooper import NoTargetLooper , TargetLooper
+    from latticeproteins.contactlooper import ContactLooper
 
 class PickleProtocolError(Exception):
     """Error is pickle version is too old. """
@@ -374,62 +375,40 @@ class Conformations(object):
         contactsetconformation = self._contactsetconformation
         # we write out separate loops for the two possible value of 'target_conf'
         # first for the case where 'target_conf' is 'None':
-        if target_conf == None:
-            if loop_in_C: # use the fast 'contactlooper' C-extension
-                (minE, ibest, partitionsum, folds) = NoTargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
-                if folds is 1:
+        if loop_in_C: # use the fast 'contactlooper' C-extension
+            (minE, ibest, partitionsum, folds) = ContactLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
+            if folds is 1:
+                folds = True
+            else:
+                folds = False
+        else: # do the looping in python
+            # initially set minimum to the first contact set:
+            folds = True
+            minE = 0.0
+            for pair in contactsets[0]:
+                minE += res_interactions[pair]
+            ibest = 0
+            for i in range(len(self._contactsets)):
+                e_contactset = 0.0 # energy of this contact set
+                # loop over all contact pairs in the contact set
+                for pair in contactsets[i]:
+                    e_contactset += res_interactions[pair]
+                    # add the energy for this contact set to the partition sum
+                    partitionsum += math.exp(-e_contactset / temp) * contactsetdegeneracy[i]
+                if e_contactset < minE:
+                    minE = e_contactset
+                    ibest = i
                     folds = True
-                else:
+                elif e_contactset == minE:
                     folds = False
-            else: # do the looping in python
-                # initially set minimum to the first contact set:
-                folds = True
-                minE = 0.0
-                for pair in contactsets[0]:
-                    minE += res_interactions[pair]
-                ibest = 0
-                for i in range(len(self._contactsets)):
-                    e_contactset = 0.0 # energy of this contact set
-                    # loop over all contact pairs in the contact set
-                    for pair in contactsets[i]:
-                        e_contactset += res_interactions[pair]
-                        # add the energy for this contact set to the partition sum
-                        partitionsum += math.exp(-e_contactset / temp) * contactsetdegeneracy[i]
-                    if e_contactset < minE:
-                        minE = e_contactset
-                        ibest = i
-                        folds = True
-                    elif e_contactset == minE:
-                        folds = False
-            conf = contactsetconformation[ibest]
-            numcontacts = len(contactsets[ibest])
-        # now for the case where 'target_conf' is a conformation
-        else:
-            if loop_in_C: # use the fast 'contactlooper' C-extension
-                #if dGf_cutoff != None:
-                #    print(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation)
-                #    (minE, partitionsum) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 1, float(dGf_cutoff))
-                #else:
-                (minE, ibest, partitionsum, k) = TargetLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp), target_conf, contactsetconformation, 0, 0.0)
-                print(k)
-                numcontacts = len(contactsets[ibest])
-                folds = True
-            else: # do the looping in python
-                minE = conf = numcontacts = None # lowest energy sequence properties
-                for i in range(len(self._contactsets)):
-                    e_contactset = 0.0 # energy of this contact set
-                    # loop over all contact pairs in the contact set
-                    for pair in contactsets[i]:
-                        e_contactset += res_interactions[pair]
-                        # add the energy for this contact set to the partition sum
-                        partitionsum += math.exp(-e_contactset / temp) * contactsetdegeneracy[i]
-                    if target_conf == contactsetconformation[i]:
-                        minE = e_contactset
-                        numcontacts = len(contactsets[i])
-                folds = True
-            if minE == None:
-                raise ConformationsError("'target_conf' is not a unique conformation.")
+        conf = contactsetconformation[ibest]
+        numcontacts = len(contactsets[ibest])
+
+        # Use the target conformation to determine nativeE and set the native conformation
+        if target_conf is not None:
+            minE = fold_energy(seq, target_conf, interactions=self._interaction_energies)
             conf = target_conf
+
         return minE, conf, partitionsum, numcontacts, folds
 
     #------------------------------------------------------------------

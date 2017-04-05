@@ -37,7 +37,8 @@ static PyObject *ContactLooperError;
 //
 //
 // Function 'NoTargetLooper'
-static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
+static PyObject *ContactLooper(PyObject *self, PyObject *args) {
+    //
     PyObject *res_interactions, *contactsets, *contactsetdegeneracy, *cs;
     PyObject *ret;
     int single_native = 1;
@@ -136,146 +137,13 @@ static PyObject *NoTargetLooper(PyObject *self, PyObject *args) {
 }
 //
 // Documentation string for 'NoTargetLooper'
-static char NoTargetLooper_doc[] = "Evaluates a sequence on its lowest energy conformation.\n\nCall is: '(minE, ibest, partitionsum) = NoTargetLooper(res_interactions,\n\tcontactsets, contactsetdegeneracy, temp)'\n'res_interactions' is a list of numbers such that 'res_interactions[j]'\n\tis the energy of interaction for contact 'j' where 'j' is\n\tthe number of the contact as stored in the sublists of 'contactsets'.\n'contactsets' is a list of all contact sets.  Each contact set is\n\titself a list of integers, such that 'j = contactsets[i][k]'\n\tis the number of contact 'k' in contact set 'i' and\n\t'j' is the index for the energy of this contact in 'res_interactions'.\n'contactsetdegeneracy' is a list of the degeneracies of the contact sets'.\n\tElement 'i' is the degeneracy of contact set 'contactsets[i]'.\n\tDegeneracies are integers.\n'temp' is a float giving the temperature for computing the partition sum.\nThe returned variable is a 3-tuple.  The first element, 'minE',\n\tis the energy of the lowest energy conformation.  The second\n\telement, 'ibest', is the index of this lowest energy conformation\n\tin 'contactsets'.  The third element, 'partitionsum', is the partition\n\tsum at temperature 'temp'.\nNOTE: NO ERROR CHECKING IS PERFORMED ON THE PASSED VARIABLES.\n\tMAKE SURE THE PASSED VARIABLES ARE OF THE CORRECT TYPES.\n";
-//
-// Function 'TargetLooper'
-
-static PyObject *TargetLooper(PyObject *self, PyObject *args) {
-    PyObject *res_interactions, *contactsets, *contactsetdegeneracy, *cs;
-    PyObject *ret, *targetconf, *contactsetconformation;
-    int use_dGf_cutoff;
-    double cutoff, temp, dGf_cutoff, minE = 0.0, e_contactset, partitionsum = 0.0;
-    long numinteractions, i, j, k, contactindex, totalcontacts;
-    static long interactionslength = 0; // stores length of 'interactions'
-    static long numcontactsets = 0;
-    static long targetconformationindex = 0;
-    static char *c_targetconf;
-    char *targetconfstring;
-    //
-    double *interactions;
-    long *c_contactsets; // stores the contact sets.  The contacts for contact j
-    // are the elements given by c_contactsets[i] where i >= c_contactstarts[j]
-    // and i < c_contactstarts[j + 1].  Each contact set is several integers.
-    // x = c_contactsets[i] describes contact i; it has the value
-    // length * ires + jres where 0 <= ires, jres < length and ires <
-    // jres + 1.
-    long *c_contactstarts; // stores starts of contact sets as described above
-    long *c_contactsetdegeneracy; // stores the contact set degeneracies.  The
-    // degeneracy for contact set j is c_contactsetdegeneracy[j]
-    // Parse the arguments
-    if (! PyArg_ParseTuple(args, "OOOdOOid", &res_interactions, &contactsets, &contactsetdegeneracy, &temp, &targetconf, &contactsetconformation, &use_dGf_cutoff, &dGf_cutoff)) {
-        PyErr_SetString(ContactLooperError, "Error parsing arguments.");
-        return NULL;
-    }
-    // compute the number of interactions
-    numinteractions = PyList_GET_SIZE(res_interactions);
-    interactionslength = numinteractions;
-    //
-    interactions = (double *) malloc(interactionslength * sizeof(double));
-    numcontactsets = PyList_GET_SIZE(contactsets);
-    c_contactsetdegeneracy = (long *) malloc(numcontactsets * sizeof(long));
-    totalcontacts = 0;
-    for (i = 0; i < numcontactsets; i++) {
-        c_contactsetdegeneracy[i] = PyInt_AS_LONG(PyList_GET_ITEM(contactsetdegeneracy, i));
-        cs = PyList_GET_ITEM(contactsets, i);
-        totalcontacts += PyList_GET_SIZE(cs);
-    }
-    c_contactsets = (long *) malloc(totalcontacts * sizeof(long));
-    c_contactstarts = (long *) malloc((numcontactsets + 1) * sizeof(long));
-    contactindex = 0;
-    c_contactstarts[0] = 0;
-    for (i = 0; i < numcontactsets; i++) {
-        cs = PyList_GET_ITEM(contactsets, i);
-        for (j = 0; j < PyList_GET_SIZE(cs); j++) {
-            c_contactsets[contactindex] = PyInt_AS_LONG(PyList_GET_ITEM(cs, j));
-            contactindex += 1;
-        }
-        c_contactstarts[i + 1] = contactindex;
-    }
-    // find the target string if we have a new target
-
-    if ((c_targetconf == NULL) || (strcmp(c_targetconf, PyString_AS_STRING(targetconf)))) {
-        targetconfstring = PyString_AS_STRING(targetconf);
-        c_targetconf = (char *) malloc((strlen(targetconfstring) + 1) * sizeof(char));
-        strcpy(c_targetconf, targetconfstring);
-        k = 0;
-        targetconformationindex = 0;
-        while (! targetconformationindex) {
-            if (k > numcontactsets) {
-                PyErr_SetString(ContactLooperError, "Did not find target conformations.");
-                return NULL;
-            }
-            if ((c_contactsetdegeneracy[k] == 1) && ! strcmp(c_targetconf, PyString_AS_STRING(PyList_GET_ITEM(contactsetconformation, k)))) {
-                targetconformationindex = k;
-            }
-            k += 1;
-        }
-    }
-    // assign the values in res_interactions to interactions
-    for (i = 0; i < numinteractions; i++) {
-        interactions[i] = PyFloat_AS_DOUBLE(PyList_GET_ITEM(res_interactions, i));
-    }
-    // stuff for target conformation
-    for (j = c_contactstarts[targetconformationindex]; j < c_contactstarts[targetconformationindex + 1]; j++) {
-        minE += interactions[c_contactsets[j]];
-    }
-    // loop over conformations to find the partition sum
-    if (use_dGf_cutoff) {
-        i = 0;
-        cutoff = 2.0 * exp(-minE / temp);
-        while ((cutoff >= partitionsum) && (i < numcontactsets)) {
-            e_contactset = 0.0;
-            for (j = c_contactstarts[i]; j < c_contactstarts[i + 1]; j++) {
-                e_contactset += interactions[c_contactsets[j]];
-            }
-            partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
-            i++;
-        }
-        if (cutoff < partitionsum) {
-            partitionsum = -1.0;
-        }
-    }
-    else {
-        for (i = 0; i < numcontactsets; i++) {
-            e_contactset = 0.0;
-            for (j = c_contactstarts[i]; j < c_contactstarts[i + 1]; j++) {
-                e_contactset += interactions[c_contactsets[j]];
-            }
-            partitionsum += exp(-e_contactset / temp) * c_contactsetdegeneracy[i];
-        }
-    }
-    if (interactions != NULL) {
-        free(interactions);
-    }
-    if (c_contactsets != NULL) {
-        free(c_contactsets);
-    }
-    if (c_contactstarts != NULL) {
-        free(c_contactstarts);
-    }
-    if (c_contactsetdegeneracy != NULL) {
-        free(c_contactsetdegeneracy);
-    }
-    if (c_targetconf != NULL) {
-        free(c_targetconf);
-    }
-    // Construct the return tuple and return it
-    ret = Py_BuildValue("dld", minE, targetconformationindex, partitionsum);
-    return ret;
-}
-
-//
-// Documentation string for 'TargetLooper'
-static char TargetLooper_doc[] = "Evaluates a sequence on a target conformation.\n\nCall is: '(minE, ibest, partitionsum) = TargetLooper(res_interactions,\n\tcontactsets, contactsetdegeneracy, temp,\n\ttarget_conf, contactsetconformation, use_dGf_cutoff, dGf_cutoff)'\n'res_interactions' is a list of numbers such that 'res_interactions[j]'\n\tis the energy of interaction for contact 'j' where 'j' is\n\tthe number of the contact as stored in the sublists of 'contactsets'.\n'contactsets' is a list of all contact sets.  Each contact set is\n\titself a list of integers, such that 'j = contactsets[i][k]'\n\tis the number of contact 'k' in contact set 'i' and\n\t'j' is the index for the energy of this contact in 'res_interactions'.\n'contactsetdegeneracy' is a list of the degeneracies of the contact sets'.\n\tElement 'i' is the degeneracy of contact set 'contactsets[i]'.\n\tDegeneracies are integers.\n'temp' is a float giving the temperature for computing the partition sum.\n'target_conf' is a string specifying the target conformation.\n'contactsetconformation' is a list of the conformations of the contact sets.\n\tElement 'i' is the conformation for contact set 'contactsets[i]' if this\n\tis a unique contact set, or 'None' if otherwise.\n'use_dGf_cutoff' is an integer.  It is 1' if\n\twe are using the 'dGf_cutoff' variable, 0 otherwise.\n'dGf_cutoff' is a float.  It has meaning iff 'dGf_cutoff' is 1.\n\tIn this case, if we can show that the free energy of folding is >\n\t'dGf_cutoff', then we simply return then with 'partition sum' set to -1.\nThe returned variable is a 3-tuple.  The first element, 'minE',\n\tis the energy of the target conformation if this\n\tconformation is unique, or 'None' if this conformation is not unique.\n\tThe second element, 'ibest', is the index of the target conformation.\n\tThe third element, 'partitionsum', is the partition\n\tsum at temperature 'temp'.\nNOTE: NO ERROR CHECKING IS PERFORMED ON THE PASSED VARIABLES.\n\tMAKE SURE THE PASSED VARIABLES ARE OF THE CORRECT TYPES.\n";
-//
-
+static char ContactLooper_doc[] = "Evaluates a sequence on its lowest energy conformation.\n\nCall is: '(minE, ibest, partitionsum) = NoTargetLooper(res_interactions,\n\tcontactsets, contactsetdegeneracy, temp)'\n'res_interactions' is a list of numbers such that 'res_interactions[j]'\n\tis the energy of interaction for contact 'j' where 'j' is\n\tthe number of the contact as stored in the sublists of 'contactsets'.\n'contactsets' is a list of all contact sets.  Each contact set is\n\titself a list of integers, such that 'j = contactsets[i][k]'\n\tis the number of contact 'k' in contact set 'i' and\n\t'j' is the index for the energy of this contact in 'res_interactions'.\n'contactsetdegeneracy' is a list of the degeneracies of the contact sets'.\n\tElement 'i' is the degeneracy of contact set 'contactsets[i]'.\n\tDegeneracies are integers.\n'temp' is a float giving the temperature for computing the partition sum.\nThe returned variable is a 3-tuple.  The first element, 'minE',\n\tis the energy of the lowest energy conformation.  The second\n\telement, 'ibest', is the index of this lowest energy conformation\n\tin 'contactsets'.  The third element, 'partitionsum', is the partition\n\tsum at temperature 'temp'.\nNOTE: NO ERROR CHECKING IS PERFORMED ON THE PASSED VARIABLES.\n\tMAKE SURE THE PASSED VARIABLES ARE OF THE CORRECT TYPES.\n";
 // Module documentation string
 static char contactlooper_doc[] = "Module implementing loops over contact sets.\n\nPublic attributes are:\n'NoTargetLooper' function.\n'TargetLooper' function.\n'ContactLooperError' exception.\nThis is a C-extension.  Written by Jesse Bloom, 2004.";
 //
 // The module methods
 static PyMethodDef contactlooper_methods[] = {
-    {"NoTargetLooper", (PyCFunction) NoTargetLooper, METH_VARARGS, NoTargetLooper_doc},
-    {"TargetLooper", (PyCFunction) TargetLooper, METH_VARARGS, TargetLooper_doc},
+    {"ContactLooper", (PyCFunction) ContactLooper, METH_VARARGS, ContactLooper_doc},
     {NULL}
 };
 //
