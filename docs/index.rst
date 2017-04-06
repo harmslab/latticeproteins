@@ -13,7 +13,7 @@ Latticeproteins
    :caption: Contents:
 
    _pages/tutorials
-
+   api
 
 Indices and tables
 ==================
