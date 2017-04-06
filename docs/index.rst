@@ -3,18 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Introduction
-============
+Latticeproteins
+===============
 
-The LatticeGPM package constructs genotype-phenotype obejcts
-
+`Latticeproteins` is a python pacakge for evaluating 2d lattice protein models.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    _pages/tutorials
-
+   api
 
 Indices and tables
 ==================

@@ -2,7 +2,12 @@
 
 Uses 2-dimensional non-compact models.
 
-Written by Jesse Bloom."""
+Originally written by Jesse Bloom.
 
+Extended by Zach Sailer."""
+from .sequences import random_sequence
+from .thermodynamics import LatticeThermodynamics
+from .interactions import miyazawa_jernigan
+from . import draw
 
-from . conformations import Conformations
+__all__ = []

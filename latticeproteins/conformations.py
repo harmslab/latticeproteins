@@ -3,12 +3,14 @@
 #---------------------------------------------------------------------------
 """Module for finding and storing the conformations of a 2D lattice protein.
 
-Written by Jesse Bloom, 2004."""
+Written by Jesse Bloom, 2004.
+
+
+
+"""
 #-----------------------------------------------------------------------
 import math, sys, os
 from latticeproteins.interactions import miyazawa_jernigan
-from latticeproteins.thermodynamics import fold_energy
-
 # Python 3 compatibility
 try:
     import cPickle as pickle
@@ -274,38 +276,25 @@ class Conformations(object):
         pickle.dump(self._contactsetconformation, open("%s/%d_contactsetconformation.pickle" % (database_dir, length), 'wb'), protocol=PROTOCOL)
         pickle.dump(self._numcontactsets, open("%s/%d_numcontactsets.pickle" % (database_dir, length), 'wb'), protocol=PROTOCOL)
     #------------------------------------------------------------------
-    def Length(self):
-        """Returns the length of the protein these conformations are for.
-
-        Call is: 'length = c.Length()'."""
+    def length(self):
+        """Returns the length of the protein these conformations are for."""
         return self._length
     #------------------------------------------------------------------
-    def FoldSequence(self, seq, temp, target_conf = None, numsaved = 1e6, loop_in_C=True):
+    def fold_sequence(self, seq, temp, loop_in_C=True, numsaved = 1e6):
         """Folds a protein sequence, calculate native energy and partition sum.
 
-        Call is: 'minE, conf, partitionsum, numcontacts = c.FoldSequence(seq, temp,
-            target_conf = None, numsaved = 1e6)'
+        Call is: 'minE, conf, partitionsum, numcontacts = c.FoldSequence(seq, temp, numsaved = 1e6)'
         'seq' is the sequence of the protein to be folded as one-letter amino
             acid codes.  It should be a string or list of length 'c.Length()'.
         'temp' is the temperature at which the protein is to be folded.  It
             must be a number > 0.  It represents a reduced temperature, scaled
             so that a value of 1 represents 273 K.
-        'target_conf' is an optional argument specifying the target
-            conformation to which we fold the protein.  If it has its
-            default value of 'None', we fold the protein to its lowest
-            energy conformation.  If 'target_conf' is not 'None', it
-            must be set to a valid conformation string (as described below
-            in the description of 'conf') describing a unique conformation
-            (only one conformation with this contact set.  The returned free
-            energy 'dGf' is then for folding to 'target_conf', and 'conf'
-            is the same as 'target_conf'.
         'numsaved' is an option utilizing the fact that the method can
             save the information for recently folded sequences instead
             of refolding them.  At any time, up to the last 'numsaved'
             unique sequences that were folded under different conditions
-            are saved.  If 'seq' folded with the options set by
-            'temp' and 'target_conf'is one of these
-            saved sequences, it can be taken from the saved sequences
+            are saved.  If 'seq' folded with the options set by 'temp' is one
+            of these saved sequences, it can be taken from the saved sequences
             and is not refolded.  As soon as more than 'numsaved'
             sequences have been folded since the last clearing of
             the folded sequences, half of the saved sequences are
@@ -339,7 +328,7 @@ class Conformations(object):
             for i in decorateditems[0 : int(numsaved / 2)]:
                 self._foldedsequences[i[1][0]] = (0, i[1][1][1])
         # Get the sequence if it stored
-        savekey = (''.join(seq), temp, target_conf)
+        savekey = (''.join(seq), temp)
         try:
             self._foldedsequences[savekey] = (self._foldedsequences[savekey][0] + 1, self._foldedsequences[savekey][1])
             return self._foldedsequences[savekey][1]
@@ -348,12 +337,6 @@ class Conformations(object):
         # do some error checking on the input variables
         if len(seq) != self._length:
             raise ConformationsError("Invalid 'seq' length: is %r but should be %r." % (len(seq), self._length))
-        if target_conf != None:
-            if not (isinstance(target_conf, str) and len(target_conf) == len(seq) - 1):
-                raise ConformationsError("Invalid 'target_conf' of %r." % target_conf)
-                if dGf_cutoff != None:
-                    if not isinstance(dGf_cutoff, (int, float)):
-                        raise ConformationsError("Invalid 'dGf_cutoff' of %s." % dGf_cutoff)
         try:
             temp = float(temp)
             if temp <= 0.0:
@@ -373,8 +356,6 @@ class Conformations(object):
         contactsets = self._contactsets
         contactsetdegeneracy = self._contactsetdegeneracy
         contactsetconformation = self._contactsetconformation
-        # we write out separate loops for the two possible value of 'target_conf'
-        # first for the case where 'target_conf' is 'None':
         if loop_in_C: # use the fast 'contactlooper' C-extension
             (minE, ibest, partitionsum, folds) = ContactLooper(res_interactions, contactsets, contactsetdegeneracy, float(temp))
             if folds is 1:
@@ -403,16 +384,10 @@ class Conformations(object):
                     folds = False
         conf = contactsetconformation[ibest]
         numcontacts = len(contactsets[ibest])
-
-        # Use the target conformation to determine nativeE and set the native conformation
-        if target_conf is not None:
-            minE = fold_energy(seq, target_conf, interactions=self._interaction_energies)
-            conf = target_conf
-
         return minE, conf, partitionsum, numcontacts, folds
 
     #------------------------------------------------------------------
-    def UniqueConformations(self, numcontacts):
+    def unique_conformations(self, numcontacts):
         """Gets all unique conformations with specified number of contacts.
 
         Call is: 'clist = c.UniqueConformations(numcontacts)'
@@ -434,7 +409,7 @@ class Conformations(object):
                     clist.append(self._contactsetconformation[i])
         return clist
     #------------------------------------------------------------------
-    def MaxContacts(self):
+    def max_contacts(self):
         """Gets the most contacts of any conformation.
 
         Call is: 'n = c.MaxContacts()'
@@ -446,7 +421,7 @@ class Conformations(object):
                 n = len(cs)
         return n
     #------------------------------------------------------------------
-    def NumConformations(self, contacts = None):
+    def num_conformations(self, contacts = None):
         """Returns the number of conformations.
 
         Call is: 'n = c.NumConformations([contacts = None])'
@@ -469,7 +444,7 @@ class Conformations(object):
                     raise ConformationsError("Invalid 'contacts' of %r." % contacts)
         return n
     #------------------------------------------------------------------
-    def NumContactSets(self, contacts = None):
+    def num_contact_sets(self, contacts = None):
         """Returns the number of unique contact sets.
 
         Call is: 'n = c.ContactSets([contacts = None])'
@@ -499,7 +474,7 @@ _saved_exactcombinations = {} # saved exact combinations for 'BindLigand'.
 # the items are how many times the combination was accessed and the
 # information about the best binding position.
 #----------------------------------------------------------------------
-def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa_jernigan, numsaved = 5000, numsavedexact = 5000):
+def bind_ligand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa_jernigan, numsaved = 5000, numsavedexact = 5000):
     """Finds the lowest energy for a ligand binding to a lattice protein.
 
     Call is: '(be, xshift, yshift, conf) = BindLigand(prot, protconf, ligand,
@@ -688,240 +663,3 @@ def BindLigand(prot, protconf, ligand, ligandconf, interaction_energies=miyazawa
             returntup = (be, xshift, yshift, conf)
     _saved_exactcombinations[exactsavekey] = (0, returntup)
     return returntup
-#---------------------------------------------------------------------
-def PrintConformation(seq, conf, file = sys.stdout, latex_format = False, ligand_tup = None, latex_justprot = False):
-    """Prints the conformation to screen or file.
-
-    Calls is: 'PrintConformation(seq, conf, [file = sys.stdout,
-        latex_format = False, ligand_tup = None])'
-    'seq' is the protein sequence, as a string or list of
-        one letter amino acid codes.
-    'conf' is the string specifying the conformation.  The string
-        consists of the characters 'U', 'D', 'L', or 'R', and is of
-        length 'len(seq)' - 1.  'conf[j]' is the conformation of bond
-        'j' (the bond between residues j and j + 1).  'U' means Up,
-        'D' means Down, 'R' means Right, and 'L' means Left.
-    The conformation is printed to the output specified by 'file'.  By
-        default, this is standard output: 'sys.stdout'.  If
-        'file' has a value different then it should be a writable file
-        object  In this case, the conformation
-        is written to that file.  'file' must already be open for writing,
-        and it is NOT closed by this method.
-    'latex_format' is a boolean switch specifying if we should print the
-        conformation as a LaTex table.  If it is 'True', then we print
-        it as a LaTex table, otherwise we do not.
-    'latex_justprot' is a boolean switch specifying that if we
-        are printing a LaTex table, we include no border or
-        dots at empty lattice sites -- just the protein.
-    'ligand_tup' can be used to specify that we also print a ligand to
-        which the lattice protein is bound.  By default, 'ligand_tup'
-        is 'None', meaning that there is no ligand bound to the
-        protein.  'ligand_tup' can also be set to the 4-tuple
-        '(ligandseq, ligandconf, xshift, yshift)'.  'ligandseq'
-        is a sequence giving the sequence of the ligand. 'ligandconf'
-        is a sequence giving the conformation of the ligand in the
-        same format as 'conf'.  'xshift' and 'yshift' specify where
-        the ligand is located relative to the protein: move 'xshift'
-        positions to the right and 'yshift' positions up from the
-        position of the first protein residue to place the first
-        ligand residue.  The ligand is printed in lower case letters."""
-    # steps in directions for different conformations
-    dx = {'U':0, 'R':2, 'D':0, 'L':-2}
-    dy = {'U':2, 'R':0, 'D':-2, 'L':0}
-    # Error check
-    if len(seq) != len(conf) + 1:
-        raise ConformationsError("Lengths of 'seq' and 'conf' are incompatible.")
-    if len(seq) < 1:
-        raise ConformationsError("Sequence 'seq' is empty.")
-    # create a dictionary listing coordinates with residues at those sites
-    # This dictionary is 'residue_coords'
-    x = y = minx = maxx = miny = maxy = 0
-    residue_coords = {(x, y):seq[0]}
-    for ibond in range(len(conf)):
-        newx = x + dx[conf[ibond]]
-        newy = y + dy[conf[ibond]]
-        # place the new coordinates
-        residue_coords[(newx, newy)] = seq[ibond + 1]
-        # place the bond
-        if newx != x:
-            residue_coords[((newx + x) / 2, y)] = '-'
-        else:
-            residue_coords[(x, (newy + y) / 2)] = '|'
-        x = newx
-        y = newy
-        # update min/max coordinates
-        minx = min(x, minx)
-        miny = min(y, miny)
-        maxx = max(x, maxx)
-        maxy = max(y, maxy)
-    # now place the ligand residues/bonds if we have a ligand
-    if ligand_tup != None:
-        # unpack the ligand tuple and do some error checking
-        try:
-            (ligandseq, ligandconf, xshift, yshift) = ligand_tup
-        except (ValueError, TypeError):
-            raise ConformationsError("Invalid 'ligand_tup' of %r." % ligand_tup)
-        if len(ligandseq) != len(ligandconf) + 1:
-            raise ConformationsError("Ligand sequence of %r and ligand conformation of %r are of incompatible lengths." % (ligandseq, ligandconf))
-        if not (isinstance(xshift, int) and isinstance(yshift, int)):
-            raise ConformationsError("Invalid 'xshift', 'yshift' pair of %r, %r." % (xshift, yshift))
-        # make 'ligandseq' all lower case, as we will print lower case letters
-        ligandseq = ''.join(ligandseq).lower()
-        # now add the ligand residues/bonds to 'residue_coords'
-        x = 2 * xshift
-        y = 2 * yshift
-        residue_coords[(x, y)] = ligandseq[0]
-        # update the min/max coordinates
-        minx = min(x, minx)
-        miny = min(y, miny)
-        maxx = max(x, maxx)
-        maxy = max(y, maxy)
-        for ibond in range(len(ligandconf)):
-            # place the next residue
-            newx = x + dx[ligandconf[ibond]]
-            newy = y + dy[ligandconf[ibond]]
-            residue_coords[(newx, newy)] = ligandseq[ibond + 1]
-            # place the bond
-            if newx != x:
-                residue_coords[((newx + x) / 2, y)] = '-'
-            else:
-                residue_coords[(x, (newy + y) / 2)] = '|'
-            x = newx
-            y = newy
-            # update the min/max coordinates
-            minx = min(x, minx)
-            miny = min(y, miny)
-            maxx = max(x, maxx)
-            maxy = max(y, maxy)
-    # create the image
-    xlength = maxx - minx + 5
-    image = []
-    if not latex_format:
-        # top buffer row
-        for x in range(xlength):
-            if x % 2:
-                image.append(" ")
-            else:
-                image.append("*")
-        image.append("\n")
-        for x in range(xlength):
-            image.append(" ")
-        image.append("\n")
-        # coordinates with structure
-        for y in range(maxy, miny - 1, -1):
-            if y % 2:
-                image.append("  ")
-                for x in range(minx, maxx + 1):
-                    try:
-                        image.append(residue_coords[(x, y)])
-                    except KeyError:
-                        image.append(" ")
-                image.append("  ")
-                image.append("\n")
-            else:
-                image.append("* ")
-                for x in range(minx, maxx + 1):
-                    if x % 2:
-                        try:
-                            image.append(residue_coords[(x, y)])
-                        except KeyError:
-                            image.append(" ")
-                    else:
-                        try:
-                            image.append(residue_coords[(x, y)])
-                        except KeyError:
-                            image.append("*")
-                image.append(" *")
-                image.append("\n")
-        # bottom buffer row
-        for x in range(xlength):
-            image.append(" ")
-        image.append("\n")
-        for x in range(xlength):
-            if x % 2:
-                image.append(" ")
-            else:
-                image.append("*")
-        image.append("\n")
-    else: # print in latex format
-        if latex_justprot:
-            emptysite = " &"
-        else:
-            emptysite = " $\\cdot$ &" # character for empty lattice sites
-        vertbond = "$\\mid$ &" # vertical bonds
-        horizbond = "--- &" # horizontal bonds
-        emptybond = " &"  # empty bond
-        endline = " \\\\\n" # end of line
-        for (key, symbol) in residue_coords.items():
-            if symbol == '|':
-                residue_coords[key] = vertbond
-            elif symbol == '-':
-                residue_coords[key] = horizbond
-            elif len(symbol) == 1:
-                residue_coords[key] = "%s &" % symbol
-        # commands to create the table
-        if latex_justprot:
-            image.append("{\\begin{tabular}{")
-        else:
-            image.append("\\fbox{\\begin{tabular}{c")
-        for i in range(xlength - 3):
-            image.append("c@{}")
-        image.append("ccc@{}}\n")
-        # top buffer row
-        if not latex_justprot:
-            for x in range(xlength):
-                if x % 2:
-                    image.append(emptybond)
-                else:
-                    image.append(emptysite)
-            image.append(endline)
-            for x in range(xlength):
-                image.append(emptybond)
-            image.append(endline)
-        # coordinates with structure
-        for y in range(maxy, miny - 1, -1):
-            if y % 2:
-                if not latex_justprot:
-                    image.append("%s%s" % (emptybond, emptybond))
-                for x in range(minx, maxx + 1):
-                    try:
-                        image.append(residue_coords[(x, y)])
-                    except KeyError:
-                        image.append(emptybond)
-                if not latex_justprot:
-                    image.append("%s%s" % (emptybond, emptybond))
-            else:
-                if not latex_justprot:
-                    image.append("%s%s" % (emptysite, emptybond))
-                for x in range(minx, maxx + 1):
-                    if x % 2:
-                        try:
-                            image.append(residue_coords[(x, y)])
-                        except KeyError:
-                            image.append(emptybond)
-                    else:
-                        try:
-                            image.append(residue_coords[(x, y)])
-                        except KeyError:
-                            image.append(emptysite)
-                if not latex_justprot:
-                    image.append("%s%s" % (emptybond, emptysite))
-            image.append(endline)
-        # bottom buffer row
-        if not latex_justprot:
-            for x in range(xlength):
-                image.append(emptybond)
-            image.append(endline)
-            for x in range(xlength):
-                if x % 2:
-                    image.append(emptybond)
-                else:
-                    image.append(emptysite)
-            image.append(endline)
-        # commands to end the table
-        image.append("\\end{tabular}}\n")
-    # make the image a string
-    image = ''.join(image)
-    file.write(image)
-#---------------------------------------------------------------------
-# End conformations.py
