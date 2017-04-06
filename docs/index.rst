@@ -18,7 +18,7 @@ Sailer. If you use this package, please cite Jesse's papers:
 .. _`Protein stability promotes evolvability`: http://www.ncbi.nlm.nih.gov/pubmed/16581913
 .. _`Stability and the evolvability of function in a model protein`: http://www.ncbi.nlm.nih.gov/pubmed/15111394
 
-.. image:: ../_images/output_9_0.svg
+.. image:: _images/output_9_0.svg
 
 Install
 =======
