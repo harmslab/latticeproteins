@@ -3,8 +3,8 @@ Lattice protein simulator
 =================================
 
 .. image:: https://readthedocs.org/projects/latticeproteins/badge/?version=latest
-:target: http://latticeproteins.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
+    :target: http://latticeproteins.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 This is a fork of the ``latticeprotein`` simulator written by `Jesse Bloom`_.
 
