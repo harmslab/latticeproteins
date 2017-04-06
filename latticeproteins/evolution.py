@@ -13,7 +13,7 @@ from .import (conformations, sequences, stats)
 class EvolutionError(Exception):
     """Error in lattice protein evolution."""
 #----------------------------------------------------------------------
-def NeutralEvolution(initialpop, stability, stabilitycutoff, popsize, mutrate, numsteps, allproteinsfile):
+def neutral_evolution(initialpop, stability, stabilitycutoff, popsize, mutrate, numsteps, allproteinsfile):
     """Performs neutral evolution of lattice proteins.
 
     Call is: '(finalpop, finalstabs, finalsubs) = NeutralEvolution(initialpop, stability,
@@ -191,7 +191,7 @@ def NeutralEvolution(initialpop, stability, stabilitycutoff, popsize, mutrate, n
     finalsubs = [prot[2] for prot in population]
     return (finalpop, finalstabs, finalsubs)
 #----------------------------------------------------------------------
-def Evolution(initialpop, fitness, popsize, mutrate, numsteps, 
+def Evolution(initialpop, fitness, popsize, mutrate, numsteps,
     file=sys.stdout,
     targetfunction=None,
     allproteinsfile=None,
