@@ -21,7 +21,7 @@ Import the latticeproteins package.
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     import latticeproteins as lp
 
@@ -36,7 +36,7 @@ grid.
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     seq_length = 10
     temperature = 1.0
@@ -47,7 +47,7 @@ evaluating thermodynamic values.
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     seq = lp.random_sequence(seq_length)
     print(seq)
@@ -60,7 +60,7 @@ Output:
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     print("Energy of native conformation: %f" % lattice.nativeE(seq))
     print("stability of native conformation: %f" % lattice.stability(seq))
@@ -80,7 +80,7 @@ drawing of the lattice conformations.
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     conf = lattice.native_conf(seq)
     lp.draw.in_notebook(seq, conf)
@@ -100,7 +100,7 @@ while using a specified *target* native state.
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     # Find the 5 lowest energy conformations.
     alt_conf = lattice.k_lowest_confs(seq, 5)
@@ -116,7 +116,7 @@ Output:
 
 Input:
 
-.. code:: ipython3
+.. code:: python
 
     print("Energy of native conformation: %f" % lattice.nativeE(seq, target=target))
     print("stability of native conformation: %f" % lattice.stability(seq, target=target))
