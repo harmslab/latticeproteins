@@ -6,7 +6,7 @@ crossing). Many thermodynamic properties can be calculated from energy landscape
 constructed from the full ensemble of conformations.
 
 <p align="center">
-<img src="docs/_images/output_9_0.png" width="50"/>
+<img src="docs/_images/output_9_0.png" width="150"/>
 </p>
 
 ## Install
