@@ -12,7 +12,7 @@ conformations for an L-length chain of amino acids on a two-dimensional grid (no
 crossing). Many thermodynamic properties can be calculated from energy landscape
 constructed from the full ensemble of conformations.
 
-.. image:: docs/_images/output_9_0.svg
+.. image:: https://raw.githubusercontent.com/Zsailer/latticeproteins/master/docs/_images/output_9_0.svg
 
 
 Install
