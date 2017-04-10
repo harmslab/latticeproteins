@@ -24,9 +24,8 @@ This is a fork of the ``latticeprotein`` simulator written by [Jesse Bloom](http
 are some pretty significant differences between the two packages. All credit goes
 to Jesse for the original implementation, so please cite Jesse's papers if you use this software:
 
-    * [Protein stability promotes evolvability](http://www.ncbi.nlm.nih.gov/pubmed/16581913)
-
-    * [Stability and the evolvability of function in a model protein](http://www.ncbi.nlm.nih.gov/pubmed/15111394)
+* [Protein stability promotes evolvability](http://www.ncbi.nlm.nih.gov/pubmed/16581913)
+* [Stability and the evolvability of function in a model protein](http://www.ncbi.nlm.nih.gov/pubmed/15111394)
 
 This maintains the [GNU Public License](http://www.gnu.org/licenses/gpl.html) of the original package.
 
