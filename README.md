@@ -34,7 +34,7 @@ This maintains the [GNU Public License](http://www.gnu.org/licenses/gpl.html) of
 + `numpy`
 + `svgwrite`
 
-The program uses a C extension, and so compilation requires the `gcc` compiler. To install the package from source::
+The program uses a C extension, and so compilation requires the `gcc` compiler. 
 
 ## Documentation
 

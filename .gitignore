@@ -1,5 +1,6 @@
 # Unique to latticeproteins
-database/
+*database/
+*.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
