@@ -29,15 +29,22 @@ to Jesse for the original implementation, so please cite Jesse's papers if you u
 
 This maintains the [GNU Public License](http://www.gnu.org/licenses/gpl.html) of the original package.
 
-Dependencies
-------------
+## Dependencies
 
 + `numpy`
 + `svgwrite`
 
 The program uses a C extension, and so compilation requires the `gcc` compiler. To install the package from source::
 
-Documentation
--------------
+## Documentation
 
 See the [Documentation](http://latticeproteins.readthedocs.io) for this package.
+
+## Testing
+
+To make sure everything is setup correctly you can run a set of Nose tests.
+
+```
+cd latticeproteins/
+nosetests
+```
