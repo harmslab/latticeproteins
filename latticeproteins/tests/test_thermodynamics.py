@@ -1,13 +1,14 @@
+"""Tests for thermodynamics module.
 
+Written by Zach Sailer, 2017.
+"""
 import os, shutil
 import unittest
 from nose import with_setup
 from nose import tools
 
-
 from ..conformations import lattice_contacts, Conformations, ConformationList
 from ..thermodynamics import LatticeThermodynamics, ThermodynamicsError
-
 
 class TestLatticeThermodynamics(unittest.TestCase):
 

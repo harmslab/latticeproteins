@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # Begin interactions.py
-"""A module containing interaction energies for lattice proteins.
+"""
+Originally written by Jesse Bloom, 2004.
 
-Written by Jesse Bloom, 2004."""
+Updated by Zach Sailer, 2017."""
 #------------------------------------------------------------------------------
 # 'miyazawa_jernigan' is a dictionary holding the contact energies from
 # Miyazawa and Jernigan, "Estimation of effective interresidue contact

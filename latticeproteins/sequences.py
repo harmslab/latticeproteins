@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # Begin sequences.py
 #---------------------------------------------------------------------------
-"""Module for lattice protein sequences.
+"""
+Originally written by Jesse Bloom, 2004.
 
-Written by Jesse Bloom, 2004."""
+Updated by Zach Sailer, 2017."""
 #---------------------------------------------------------------------------
 import random, shelve, os
 #---------------------------------------------------------------------------

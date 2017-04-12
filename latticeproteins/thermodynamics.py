@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # Begin fitness.py
 #---------------------------------------------------------------------
-"""Module for calculating fitnesses of lattice protein sequences.
+"""Module for calculating thermodynamics of lattice protein sequences.
 
-Written by Jesse Bloom, 2004."""
+Originally written by Jesse Bloom, 2004.
+
+Updated by Zach Sailer, 2017."""
 #----------------------------------------------------------------------
 import os
 import math, sys

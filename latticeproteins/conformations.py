@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # Begin conformations.py
 #---------------------------------------------------------------------------
-"""Module for finding and storing the conformations of a 2D lattice protein.
+"""Module for constructing conformation database for sequences of set length.
 
-Written by Jesse Bloom, 2004.
-"""
+Originally written by Jesse Bloom, 2004.
+
+Updated by Zach Sailer, 2017."""
 #-----------------------------------------------------------------------
 import math, sys, os
 import numpy as np

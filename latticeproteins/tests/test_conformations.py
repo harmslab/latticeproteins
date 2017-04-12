@@ -1,4 +1,7 @@
+"""Tests for conformations module.
 
+Written by Zach Sailer, 2017.
+"""
 import os, shutil
 import unittest
 from nose import with_setup

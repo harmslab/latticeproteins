@@ -1,6 +1,9 @@
 __doc__ = """
-
 Module for creating SVG's of protein lattice configurations.
+
+Originally written by Jesse Bloom, 2004.
+
+Updated by Zach Sailer, 2017.
 
 Example call:
 

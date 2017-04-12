@@ -1,5 +1,6 @@
 // Begin contactlooper.c
-// This file contains a python module written by Jesse B)loom, 2004
+// This file contains a python module written by Jesse Bloom, 2004
+// Adapted by Zach Sailer, 2017
 // It is designed for executing fast loops in the analysis of lattice
 // protein conformation energies.
 //
