@@ -2,7 +2,15 @@
 import os, shutil
 import unittest
 from nose import with_setup
-from ..conformations import Conformations
+from ..conformations import lattice_contacts, Conformations, ConformationList
+
+from nose import tools
+
+def test_lattice_contacts():
+    seq = "ABCDEFGHIJKLMNOPQR"
+    conf = "URDRUULLLDDDRRDLL"
+    contacts = lattice_contacts(seq, conf)
+    tools.assert_equal(len(contacts), 10)
 
 class TestConformations(unittest.TestCase):
 
@@ -50,3 +58,36 @@ class TestConformations(unittest.TestCase):
         n = c.num_conformations()
         # Should have 36 conformations for a 6 site lattice protein
         self.assertEqual(n, 36)
+
+
+class TestConformationList(unittest.TestCase):
+
+    def setUp(self):
+        self.length = 6
+        self.seq = "AHKEDP"
+        self.temp = 1
+        self.confs = ['URRDL', 'UURDD', 'URDRU']
+
+    def test__init__(self):
+        c = ConformationList(self.length, self.confs)
+        self.assertEqual(c._length, self.length)
+
+    def test_fold_sequence(self):
+        c = ConformationList(self.length, self.confs)
+        minE, conf, partitionsum, folds = c.fold_sequence(self.seq, self.temp)
+        self.assertEqual(type(folds), bool)
+        self.assertEqual(len(conf), self.length-1)
+        self.assertEqual(conf, self.confs[1])
+        self.assertGreater(partitionsum, 70.0)
+
+    def test_max_contacts(self):
+        c = ConformationList(self.length, self.confs)
+        n = c.max_contacts()
+        # Should only see 2 contacts in 6-site lattice protein
+        self.assertEqual(n, 2)
+
+    def test_num_conformations(self):
+        c = ConformationList(self.length, self.confs)
+        n = c.num_conformations()
+        # Should have 36 conformations for a 6 site lattice protein
+        self.assertEqual(n, 3)

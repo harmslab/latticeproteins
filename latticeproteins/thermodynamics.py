@@ -23,19 +23,22 @@ class LatticeThermodynamics(object):
     ----------
     temp : float
         the temperature at which the fitness is computed.
-    conformations : conformations.Conformations object
+    confs : conformations.Conformations object
         is the 'conformations.Conformations' object
         used to fold the protein sequences.  'conformations.Length()'
         specifies the length of the protein sequences that can be
         folded.
     """
     #------------------------------------------------------------------
-    def __init__(self, temp, conformations):
+    def __init__(self, temp, confs):
         # Assign class instance variables and error check
-        self._temp = temp
-        if not (isinstance(self._temp, (int, float)) and temp > 0):
+        if not (isinstance(temp, (int, float)) and temp > 0):
             raise ThermodynamicsError("Invalid 'temp' of %r." % temp)
-        self._conformations = conformations
+        # Check Conformations.
+        if not isinstance(confs, conformations.Conformations) and not isinstance(confs, conformations.ConformationList):
+            raise TypeError("conformations must be a Conformations or ConformationList object.")
+        self._temp = temp
+        self._conformations = confs
 
     @classmethod
     def from_length(cls, length, temp, database_dir="database/", interactions=miyazawa_jernigan):
@@ -266,3 +269,79 @@ class LatticeThermodynamics(object):
     def length(self):
         """Returns the sequence length for which fitnesses are computed."""
         return self._conformations.length()
+
+
+class GroupThermodynamics(object):
+    """Efficiently calculates thermodynamic properties for a list of lattice proteins.
+
+    Parameters
+    ----------
+    seqlist : list
+        List of lattice proteins.
+    temp : float
+        temperature of the system.
+    confs : Conformations or ConformationList object
+        Conformation database for lattice with set length
+    target : str (optional, default=None)
+        target conformation to fold protein list
+
+    Attributes
+    ----------
+    seqlist : list
+        list of sequences.
+    temp : float
+        temperature of the system.
+    nativeEs : array
+        native (or target) energy for sequences in seqlist
+    stabilities : array
+        array of stabilities for sequences in seqlist
+    fracfolded : array
+        array of fraction folded for sequences in seqlist
+    """
+    def __init__(self, seqlist, temp, confs, target=None):
+        # Assign class instance variables and error check
+        if not (isinstance(temp, (int, float)) and temp > 0):
+            raise ThermodynamicsError("Invalid 'temp' of %r." % temp)
+        self.temp = temp
+
+        # Set conformations after checking
+        if not isinstance(confs, conformations.Conformations) and not isinstance(confs, conformations.ConformationList):
+            raise TypeError("conformations must be a Conformations or ConformationList object.")
+        self._conformations = confs
+        self.length = self._conformations.length
+
+        # Check length of target
+        if len(target)-1 != self.length:
+            raise ThermodynamicsError("Length of target must be length-1")
+        self._target = target
+
+        self.seqlist = seqlist
+        self.nativeEs = np.empty(len(self.seqlist), dtype=float)
+        self.confs = np.empty(len(self.seqlist), dtype="U|" + self.length)
+        self._partitionsum = np.empty(len(self.seqlist), dtype=float)
+
+        for i, seq in enumerate(self.seqlist):
+            # Check that sequence is valid
+            if len(seq) != self.length:
+                raise ThermodynamicsError("Length of sequence, %s, does not equal conformation lengths" % seq)
+
+            # Fold sequence and set energy
+            out = self._conformations.fold_sequence(seq, self.temp)
+            if target is not None:
+                self.nativeEs[i] = conformations.fold_energy(seq, target)
+            else:
+                self.nativeEs[i] = out[0]
+            self.confs[i] = out[1]
+            self._partitionsum[i] = out[2]
+
+    @property
+    def stabilities(self):
+        """Folding stability for all sequences in seqlist."""
+        gu = - self._temp * np.log(self._partitionsum - np.exp(-self.nativeEs / self.temp))
+        dGf = minE - gu
+        return dGf
+
+    @property
+    def fracfolded(self):
+        """Fracfolded folded for all sequences in seqlist."""
+        return 1.0 / (1.0 + np.exp(self.stability / self._temp))

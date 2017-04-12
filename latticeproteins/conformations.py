@@ -4,9 +4,6 @@
 """Module for finding and storing the conformations of a 2D lattice protein.
 
 Written by Jesse Bloom, 2004.
-
-
-
 """
 #-----------------------------------------------------------------------
 import math, sys, os
@@ -79,7 +76,7 @@ def lattice_contacts(sequence, conformation):
     # since we are working in numpy array grid.
     coordinates = {"U": [-1,0], "D":[1,0], "L":[0,-1], "R":[0,1]}
     grid = np.zeros((2*length+1, 2*length+1), dtype=str)
-    x = y = round(length/2.0) # initial position on the grid is at the center of the 2d array
+    x = y = length # initial position on the grid is at the center of the 2d array
     grid[x,y] = sites[0]
     # move on grid, populate with amino acid at that site, and store all contacting neighbors.
     contacts = []
@@ -89,11 +86,13 @@ def lattice_contacts(sequence, conformation):
         y += step[1]
         grid[x,y] = sites[i+1]
         neighbors = [sites[i+1] + grid[x+c[0], y+c[1]] for c in coordinates.values()]
-        contacts += [n for n in neighbors if n in miyazawa_jernigan]
+        contacts += [n for n in neighbors if len(n) == 2]
     # subtract the contacts that have bonds between them.
     for i in range(1,length):
+        # Try forward
         try:
             contacts.remove(sequence[i-1:i+1])
+        # Else try reverse
         except ValueError:
             contacts.remove(sequence[i] + sequence[i-1])
     return contacts
@@ -103,7 +102,7 @@ def lattice_contacts(sequence, conformation):
 #----------------------------------------------------------------------
 
 class Conformations(object):
-    """Creates a list of conformations for a protein of specified length.
+    """Creates a database of conformations for a protein of specified length.
 
     The created 'Conformations' object 'c' stores the contact
         lists and the number of conformations with these contact sets
@@ -124,9 +123,42 @@ class Conformations(object):
     interaction_energies :
         specifies the interaction energies between
         residues. By default, this is interactions.miyazawa_jernigan.
+
+
+    Attributes
+    ----------
+    _numconformations : dict
+        A dictionary mapping the number of contact sets to the number of conformations
+        with that contact set.
+    _contactsets : list of lists
+        'self._contactsets' is a list of contact sets.  'self._contactsets[i]'
+        is the contact set for contact i.  It is a list of numbers.
+        'x = self._contactsets[i]' describes the residues in contact
+        in contact 'i'.  If this contact is between residues 'ires'
+        and 'jres', then 'x = self._length * ires + jres' where
+        0 <= ires, jres < 'self._length', and ires < jres + 1 contact sets
+    _contactsetdegeneracy : list
+        'self._contactsetdegeneracy' is a list of integers giving the
+        degeneracy of the contact sets (the number of different conformations
+        with this contact set).  'self_contactsetdegeneracy[i]' is the
+        degeneracy of the contact set 'self._contactsets[i]'
+    _contactsetconformation : list
+        'self._contactsetconformation' is a list of the conformations
+        associated with each contact set.  If contact set 'self._contactsets[i]'
+        is degenerate ('self._contactsetdegeneracy[i]' > 1), the value
+        'self._contactsetconformation[i]' is 'None'.  Otherwise, it
+        is the string representing the conformation that gives rise
+        to contact set 'self._contactsets[i]'.  The conformations are given
+        such that 'self._contactsetconformation[i][j]'
+        gives the conformation of bond 'j' (0 <= j < 'self._length' - 1)
+        as 'U' (Up), 'R' (Right), 'D' (Down), or 'L' (Left).
+        We require the first bond to be Up, and the first
+        non-Up bond to be Right.
+    _numcontactsets : dict
+        'self._numcontactsets[i]' holds the number of different contact
+        sets with 'i' contacts.
     """
     def __init__(self, length, database_dir="database/", interaction_energies=miyazawa_jernigan):
-
         self._interaction_energies = interaction_energies
         if not os.path.isdir(database_dir):
             os.makedirs(database_dir)
@@ -163,6 +195,11 @@ class Conformations(object):
             self._contactsetdegeneracy = [decorated_list[i][2] for i in range(n)]
             self._contactsetconformation = [decorated_list[i][3] for i in range(n)]
             self._foldedsequences = {}
+            print(self._numconformations)
+            print(self._contactsets)
+            print(self._contactsetdegeneracy)
+            print(self._contactsetconformation)
+            print(self._numcontactsets)
             return
         elif foundone and didntfindone:
             raise ValueError("Found some but not all conformations for length %d in %s." % (length, database_dir))
@@ -226,7 +263,6 @@ class Conformations(object):
         # then 'self._contactsets[cs]' is an integer > 1 that represents
         # the number of conformations coding for this contact set.
         contactsets = {}
-        #
         # Now being looping over all possible conformations
         # The initial conformation is all 'U'
         dx = {'U':0, 'R':1, 'D':0, 'L':-1}
@@ -400,14 +436,6 @@ class Conformations(object):
         folds : bool
             True if lattice protein has a single lowest energy.
         """
-        # Get the sequence if it stored
-        savekey = (''.join(seq), temp)
-        try:
-            self._foldedsequences[savekey] = (self._foldedsequences[savekey][0] + 1, self._foldedsequences[savekey][1])
-            return self._foldedsequences[savekey][1]
-        except KeyError:
-            pass
-
         # do some error checking on the input variables
         if len(seq) != self._length:
             raise ConformationsError("Invalid 'seq' length: is %r but should be %r." % (len(seq), self._length))
@@ -526,12 +554,27 @@ class Conformations(object):
                     raise Conformationserror("Invalid 'contacts' of %r." % contacts)
 
 class ConformationList(object):
-    """Construct a conformations list of
+    """Build an Conformations like object without the database. Uses a list of
+    conformations provided by user to construct a Conformations object.
+
+    **Note** This will likely be much slower at calculating large lists of
+    conformations.
+
+    Parameters
+    ----------
+    length :
+        is an integer specifying the length of the protein
+        for which we are computing the contacts.  It must be >= 2.
+    conflist :
+        a list of conformations.
+    interaction_energies :
+        specifies the interaction energies between
+        residues. By default, this is interactions.miyazawa_jernigan.
     """
-    def __int__(self, length, conformations, interaction_energies=miyazawa_jernigan):
+    def __init__(self, length, conflist, interaction_energies=miyazawa_jernigan):
         self._length = length
         self._interaction_energies = miyazawa_jernigan
-        self._unique = conformations
+        self._conflist = conflist
 
     def length(self):
         """Returns the length of the protein these conformations are for."""
@@ -563,8 +606,22 @@ class ConformationList(object):
         folds : bool
             True if lattice protein has a single lowest energy.
         """
-
-        return minE, conf, partitionsum, numcontacts, folds
+        Es = []
+        minE, partitionsum = 0, 0
+        conf = ""
+        folds = False
+        for c in self._conflist:
+            E = fold_energy(seq, c)
+            Es.append(E)
+            partitionsum += math.exp(-E/temp)
+            if E < minE:
+                minE = E
+                conf = c
+                folds = True
+            # If the energy equals the current minimum, sequence doesn't fold
+            elif E == minE:
+                folds = False
+        return minE, conf, partitionsum, folds
 
     def unique_conformations(self, numcontacts):
         """Gets all unique conformations with specified number of contacts.
@@ -585,22 +642,8 @@ class ConformationList(object):
             'clist' is an empty list.  Conformations are specified
             as strings of 'U', 'R', 'L', and 'D' as described in
             'FoldSequence'."""
-        clist = self._unique
+        clist = list(np.unique(self._conflist))
         return clist
-
-    def max_contacts(self):
-        """Gets the most contacts of any conformation.
-
-        Returns
-        -------
-        n : int
-            is returned as the number of contacts for the conformation
-            with the most contacts."""
-        n = 0
-        for cs in self._contactsets:
-            if len(cs) > n:
-                n = len(cs)
-        return n
 
     def num_conformations(self, contacts = None):
         """Returns the number of conformations.
@@ -611,3 +654,37 @@ class ConformationList(object):
             with 'contacts' contacts.  If there are no walks with this number
             of contacts, returns 0.
         """
+        return len(self._conflist)
+
+    def max_contacts(self):
+        """Gets the most contacts of any conformation.
+
+        Returns
+        -------
+        n : int
+            is returned as the number of contacts for the conformation
+            with the most contacts.
+        """
+        n = 0
+        dummy_seq = "0"*(self._length)
+        for c in self._conflist:
+            cs = lattice_contacts(dummy_seq, c)
+            if len(cs) > n:
+                n = len(cs)
+        return n
+
+    def num_contact_sets(self, contacts = None):
+        """Returns the number of unique contact sets.
+
+        If 'contacts' has its default value of 'None', returns the total
+            number of unique contact sets (defined as the list of all
+            contacts of non-adjacent residues).
+        If 'contacts' has an integer value, returns the number of unique
+            contact sets with 'contacts' contacts.  If there are no
+            contact sets with this number of contacts, returns 0.
+        """
+        contacts = []
+        dummy_seq = "0"*self.length + 1
+        for c in self._conflist:
+            contacts.append(lattice_contacts(dummy_seq, c))
+        return len(contacts)
