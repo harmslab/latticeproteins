@@ -27,6 +27,14 @@ def hamming_distance(seq1, seq2):
             d += 1
     return d
 
+def find_differences(s1, s2):
+    """Return the index of differences between two sequences."""
+    indices = list()
+    for i in range(len(s1)):
+        if s1[i] != s2[i]:
+            indices.append(i)
+    return indices
+
 def random_sequence(length):
     """Returns a random sequence of the specified length."""
     if not (isinstance(length, int) and length > 0):

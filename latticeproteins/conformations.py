@@ -196,11 +196,6 @@ class Conformations(object):
             self._contactsetdegeneracy = [decorated_list[i][2] for i in range(n)]
             self._contactsetconformation = [decorated_list[i][3] for i in range(n)]
             self._foldedsequences = {}
-            print(self._numconformations)
-            print(self._contactsets)
-            print(self._contactsetdegeneracy)
-            print(self._contactsetconformation)
-            print(self._numcontactsets)
             return
         elif foundone and didntfindone:
             raise ValueError("Found some but not all conformations for length %d in %s." % (length, database_dir))

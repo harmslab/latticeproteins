@@ -6,8 +6,7 @@ Originally written by Jesse Bloom.
 
 Extended by Zach Sailer."""
 from .sequences import random_sequence
-from .thermodynamics import LatticeThermodynamics
+from .thermodynamics import LatticeThermodynamics, GroupThermodynamics
+from .conformations import Conformations, ConformationList
 from .interactions import miyazawa_jernigan
 from . import draw
-
-__all__ = []

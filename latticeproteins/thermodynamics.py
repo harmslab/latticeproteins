@@ -125,7 +125,7 @@ class LatticeThermodynamics(object):
         stability_results = self._stability(*nativeE_results)
         return stability_results[0]
 
-    def _stability(self, minE, conf, partitionsum, numcontacts, folds):
+    def _stability(self, minE, conf, partitionsum, folds):
         """Computes a stability from minE and partition function.
 
         Parameters
@@ -179,7 +179,7 @@ class LatticeThermodynamics(object):
         fracfolded_results = self._fracfolded(*stability_results)
         return fracfolded_results[0]
 
-    def _fracfolded(self, dG, conf, partitionsum, numcontacts, folds):
+    def _fracfolded(self, dG, conf, partitionsum, folds):
         """Computes the fitness from a given stability value
 
         Parameters
