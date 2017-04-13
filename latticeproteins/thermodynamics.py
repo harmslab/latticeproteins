@@ -13,6 +13,7 @@ import numpy as np
 
 from . import conformations
 from .interactions import miyazawa_jernigan
+from .conformations import fold_energy
 #----------------------------------------------------------------------
 class ThermodynamicsError(Exception):
     """Error computing lattice protein thermodynamics."""
