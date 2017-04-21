@@ -206,15 +206,8 @@ class LatticeThermodynamics(object):
         if folds is False:
             return (0, conf, partitionsum, folds)
         else:
-            if self._ligand:
-                if dG > self._ligand[2]:
-                    return (0, conf, partitionsum, False) # does not stably fold
-                else:
-                    be = conformations.bind_ligand(seq, conf, self._ligand[0], self._ligand[1])[0]
-                    return (math.exp(-be), conf, partitionsum, folds)  # compute the fitness
-            else:
-                f = 1.0 / (1.0 + math.exp(dG / self._temp))
-                return (f, conf, partitionsum, folds)
+            f = 1.0 / (1.0 + math.exp(dG / self._temp))
+            return (f, conf, partitionsum, folds)
 
     #---------------------------------------------------------------------
     def all_metrics(self, seq):

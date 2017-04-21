@@ -21,7 +21,8 @@ pip install -e .
 ## Credit
 
 This is a fork of the ``latticeprotein`` simulator written by [Jesse Bloom](http://research.fhcrc.org/bloom/en.html). There
-are some pretty significant differences between the two packages. All credit goes
+are some pretty significant differences between the two packages. Mainly, I've added Numpy as a key dependency of this
+module to speed up computation and improve memory efficiency. All credit goes
 to Jesse for the original implementation, so please cite Jesse's papers if you use this software:
 
 * [Protein stability promotes evolvability](http://www.ncbi.nlm.nih.gov/pubmed/16581913)
@@ -34,7 +35,7 @@ This maintains the [GNU Public License](http://www.gnu.org/licenses/gpl.html) of
 + `numpy`
 + `svgwrite`
 
-The program uses a C extension, and so compilation requires the `gcc` compiler. 
+The program uses a C extension, and so compilation requires the `gcc` compiler.
 
 ## Documentation
 
