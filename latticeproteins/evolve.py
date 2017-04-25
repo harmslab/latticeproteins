@@ -35,6 +35,7 @@ def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_thr
         selected lattice target conformation. If None, the lattice will
         fold to the natural native conformation.
     """
+    length = len(seq)
     fitness_method = getattr(lattice, selected_trait)
     fitness0 = fitness_method(seq, target=target)
     finished = False
