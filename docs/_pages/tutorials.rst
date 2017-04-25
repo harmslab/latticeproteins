@@ -23,7 +23,7 @@ Input:
 
 .. code:: python
 
-    import latticeproteins as lp
+    import latticeproteins
 
 The ``LatticeThermodyanmics`` class creates objects that can calculate
 lattice protein thermodynamics for any sequences of a specified length.
@@ -40,7 +40,7 @@ Input:
 
     seq_length = 10
     temperature = 1.0
-    lattice = lp.LatticeThermodynamics.from_length(seq_length, 1.0)
+    lattice = latticeproteins.LatticeThermodynamics.from_length(seq_length, 1.0)
 
 Now, we'll create a random sequence with the given length and start
 evaluating thermodynamic values.
@@ -49,7 +49,7 @@ Input:
 
 .. code:: python
 
-    seq = lp.random_sequence(seq_length)
+    seq = latticeproteins.random_sequence(seq_length)
     print(seq)
 
 Output:
@@ -83,7 +83,7 @@ Input:
 .. code:: python
 
     conf = lattice.native_conf(seq)
-    lp.draw.in_notebook(seq, conf)
+    latticeproteins.draw.in_notebook(seq, conf)
 
 Output:
 
@@ -107,7 +107,7 @@ Input:
 
     # Choose the 5th lowest as the target fold.
     target = alt_conf[-1]
-    lp.draw.in_notebook(seq, target)
+    latticeproteins.draw.in_notebook(seq, target)
 
 Output:
 
