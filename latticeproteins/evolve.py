@@ -18,7 +18,7 @@ def fixation(fitness1, fitness2, N=10e8, *args, **kwargs):
     fixation = np.nan_to_num(fixation)
     return fixation
 
-def mont_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_threshold=0.5, max_mutations=15, target=None):
+def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_threshold=0.5, max_mutations=15, target=None):
     """Use Monte Carlo method to walk
 
     Parameters
@@ -50,7 +50,6 @@ def mont_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_thre
             seq1 = mutant[:]
             seq1[i] = AA_grid[i,j]
             fits[i,j] = fitness_method(seq1, target=target)
-
 
         # Calculate fitness for all neighbors in sequence space
         fix = fixation(fitness0, fits)
