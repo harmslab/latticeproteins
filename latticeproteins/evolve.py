@@ -57,25 +57,31 @@ def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_thr
 
         # Normalize
         denom = fix.sum()
-        p = fix / denom
+        if denom < 1:
+            self_move = _residues.index(mutant[0])
+            fix[0, self_move] = 1 - denom
+            p = fix
+        else:
+            p = fix / denom
 
         # Sample moves
         mutation, indices = np2d.random.choice(AA_grid, p=p)
         site = indices[0,0]
         AA = indices[0,1]
-        mutant[site] = mutation
-
-        # Update our trajectory
-        path.append("".join(mutant))
-        fitness.append(fits[site, AA])
-        probs.append(fix[site, AA])
-        fitness0 = fits[site, AA]
 
         # Check criteria to kill the trajectory
         # If the total probability of a mutation fixing is < 5%,
         # then kill the loop.
-        if denom < fix_threshold:
+        # Update our trajectory
+        if mutant[site] == mutation:
             finished = True
+        else:
+            mutant[site] = mutation
+            path.append("".join(mutant))
+            fitness.append(fits[site, AA])
+            probs.append(fix[site, AA])
+            fitness0 = fits[site, AA]
+
         m += 1
 
     return path, fitness, probs
