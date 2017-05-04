@@ -15,10 +15,12 @@ def fixation(fitness1, fitness2, N=10e8, *args, **kwargs):
     numerator = 1 - np.exp(- sij)
     # Calculate the fixation probability
     fixation = numerator / denominator
-    fixation = np.nan_to_num(fixation)
+    if type(fixation) == np.ndarray:
+        fixation = np.nan_to_num(fixation)
+        fixation[sij < 0] = 0
     return fixation
 
-def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_threshold=0.5, max_mutations=15, target=None):
+def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", max_mutations=15, target=None, self_transition=True):
     """Use Monte Carlo method to walk
 
     Parameters
@@ -53,16 +55,15 @@ def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_thr
             fits[i,j] = fitness_method(seq1, target=target)
 
         # Calculate fitness for all neighbors in sequence space
-        fix = fixation(fitness0, fits)
+        fix = fixation(fitness0, fits)  * (1. / fits.size) # multplied by flat prior for all mutations
 
         # Normalize
-        denom = fix.sum()
-        if denom < 1:
+        if self_transition:
             self_move = _residues.index(mutant[0])
             fix[0, self_move] = 1 - denom
             p = fix
         else:
-            p = fix / denom
+            p = fix / fix.sum()
 
         # Sample moves
         mutation, indices = np2d.random.choice(AA_grid, p=p)
@@ -73,7 +74,7 @@ def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_thr
         # If the total probability of a mutation fixing is < 5%,
         # then kill the loop.
         # Update our trajectory
-        if mutant[site] == mutation:
+        if mutant[site] == mutation or fix.sum() == 0:
             finished = True
         else:
             mutant[site] = mutation
@@ -83,5 +84,4 @@ def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", fix_thr
             fitness0 = fits[site, AA]
 
         m += 1
-
     return path, fitness, probs
