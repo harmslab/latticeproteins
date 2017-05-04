@@ -20,7 +20,7 @@ def fixation(fitness1, fitness2, N=10e8, *args, **kwargs):
         fixation[sij < 0] = 0
     return fixation
 
-def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", max_mutations=15, target=None, self_transition=True):
+def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", max_mutations=15, target=None, self_transition=False):
     """Use Monte Carlo method to walk
 
     Parameters
@@ -60,7 +60,7 @@ def monte_carlo_fixation_walk(seq, lattice, selected_trait="fracfolded", max_mut
         # Normalize
         if self_transition:
             self_move = _residues.index(mutant[0])
-            fix[0, self_move] = 1 - denom
+            fix[0, self_move] = 1 - fix.sum()
             p = fix
         else:
             p = fix / fix.sum()
