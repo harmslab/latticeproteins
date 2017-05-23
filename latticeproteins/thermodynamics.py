@@ -150,7 +150,7 @@ class LatticeThermodynamics(object):
         #(minE, conf, partitionsum, numcontacts, folds) = self._NativeE(seq)
         # Calculate a stability... if calculation does not work, stability = 0
         if folds:
-            gu = - self._temp * math.log(partitionsum - math.exp(-minE / self._temp))
+            gu = - self._temp * np.log(partitionsum - np.exp(-minE / self._temp))
             dGf = minE - gu
             return (dGf, conf, partitionsum, folds)
         else:
@@ -206,7 +206,7 @@ class LatticeThermodynamics(object):
         if folds is False:
             return (0, conf, partitionsum, folds)
         else:
-            f = 1.0 / (1.0 + math.exp(dG / self._temp))
+            f = 1.0 / (1.0 + np.exp(dG / self._temp))
             return (f, conf, partitionsum, folds)
 
     #---------------------------------------------------------------------
