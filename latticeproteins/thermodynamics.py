@@ -40,8 +40,8 @@ class LatticeThermodynamics(object):
         # Check Conformations.
         if not isinstance(confs, conformations.Conformations) and not isinstance(confs, conformations.ConformationList):
             raise TypeError("conformations must be a Conformations or ConformationList object.")
-        self._temp = temp
-        self._conformations = confs
+        self.temp = temp
+        self.confs = confs
 
     @classmethod
     def from_length(cls, length, temp, database_dir="database/", interactions=miyazawa_jernigan):
@@ -75,7 +75,7 @@ class LatticeThermodynamics(object):
         if target is None:
             (minE, conf, partitionsum, folds) = self._nativeE(seq)
         else:
-            minE = fold_energy(seq, target, self._conformations._interaction_energies)
+            minE = fold_energy(seq, target, self.confs._interaction_energies)
         return minE
 
     def _nativeE(self, seq):
@@ -101,7 +101,7 @@ class LatticeThermodynamics(object):
         """
         if len(seq) != self.length():
             raise ThermodynamicsError("Invalid 'seq' of %r." % seq)
-        return self._conformations.fold_sequence(seq, self._temp)
+        return self.confs.fold_sequence(seq, self.temp)
     #---------------------------------------------------------------------
     def stability(self, seq, target=None):
         """Computes the stability of a sequence if it is below cutoff.
@@ -118,7 +118,7 @@ class LatticeThermodynamics(object):
         """
         nativeE_results = self._nativeE(seq)
         if target is not None:
-            minE = fold_energy(seq, target, self._conformations._interaction_energies)
+            minE = fold_energy(seq, target, self.confs._interaction_energies)
             nativeE_results = list(nativeE_results)
             nativeE_results[0] = minE
             nativeE_results[1] = target
@@ -150,7 +150,7 @@ class LatticeThermodynamics(object):
         #(minE, conf, partitionsum, numcontacts, folds) = self._NativeE(seq)
         # Calculate a stability... if calculation does not work, stability = 0
         if folds:
-            gu = - self._temp * np.log(partitionsum - np.exp(-minE / self._temp))
+            gu = - self.temp * np.log(partitionsum - np.exp(-minE / self.temp))
             dGf = minE - gu
             return (dGf, conf, partitionsum, folds)
         else:
@@ -171,7 +171,7 @@ class LatticeThermodynamics(object):
         """
         nativeE_results = self._nativeE(seq)
         if target != None:
-            minE = fold_energy(seq, target, self._conformations._interaction_energies)
+            minE = fold_energy(seq, target, self.confs._interaction_energies)
             nativeE_results = list(nativeE_results)
             nativeE_results[0] = minE
             nativeE_results[1] = target
@@ -206,7 +206,7 @@ class LatticeThermodynamics(object):
         if folds is False:
             return (0, conf, partitionsum, folds)
         else:
-            f = 1.0 / (1.0 + np.exp(dG / self._temp))
+            f = 1.0 / (1.0 + np.exp(dG / self.temp))
             return (f, conf, partitionsum, folds)
 
     #---------------------------------------------------------------------
@@ -264,7 +264,7 @@ class LatticeThermodynamics(object):
     #---------------------------------------------------------------------
     def length(self):
         """Returns the sequence length for which fitnesses are computed."""
-        return self._conformations.length()
+        return self.confs.length()
 
 
 class GroupThermodynamics(object):
@@ -303,8 +303,8 @@ class GroupThermodynamics(object):
         # Set conformations after checking
         if not isinstance(confs, conformations.Conformations) and not isinstance(confs, conformations.ConformationList):
             raise TypeError("conformations must be a Conformations or ConformationList object.")
-        self._conformations = confs
-        self.length = self._conformations.length
+        self.confs = confs
+        self.length = self.confs.length
 
         # Check length of target
         if len(target)-1 != self.length:
@@ -322,7 +322,7 @@ class GroupThermodynamics(object):
                 raise ThermodynamicsError("Length of sequence, %s, does not equal conformation lengths" % seq)
 
             # Fold sequence and set energy
-            out = self._conformations.fold_sequence(seq, self.temp)
+            out = self.confs.fold_sequence(seq, self.temp)
             if target is not None:
                 self.nativeEs[i] = conformations.fold_energy(seq, target)
             else:
@@ -333,11 +333,11 @@ class GroupThermodynamics(object):
     @property
     def stabilities(self):
         """Folding stability for all sequences in seqlist."""
-        gu = - self._temp * np.log(self._partitionsum - np.exp(-self.nativeEs / self.temp))
+        gu = - self.temp * np.log(self._partitionsum - np.exp(-self.nativeEs / self.temp))
         dGf = minE - gu
         return dGf
 
     @property
     def fracfolded(self):
         """Fracfolded folded for all sequences in seqlist."""
-        return 1.0 / (1.0 + np.exp(self.stability / self._temp))
+        return 1.0 / (1.0 + np.exp(self.stability / self.temp))
