@@ -17,6 +17,7 @@ Example call:
 """
 
 import svgwrite
+import numpy as np
 from functools import wraps
 try:
     from IPython.display import SVG
@@ -159,7 +160,7 @@ class Configuration(SVG):
 
     @property
     def data(self):
-        """ Return svg as a string. """
+        """Return svg as a string."""
         return self.drawing.tostring()
 
     @property
@@ -192,27 +193,27 @@ class Configuration(SVG):
         """
         # Try if it's a bond
         try:
-            if self.mapping[self.array[y][x]] is not None:
+            if self.mapping[self.array[x,y]] is not None:
                 # Get SVG element to add
-                item = self.mapping[self.array[y][x]]
+                item = self.mapping[self.array[x,y]]
                 # Add element
-                item(2*self.offset+self.font_size*x,
-                    2*self.offset+self.font_size*y)
+                item(2*self.offset+self.font_size*y,
+                    2*self.offset+self.font_size*x)
         # Otherwise its a letter
         except KeyError:
             # Add color to specific letters if given
-            color = COLORS[self.color_array[x][y]]
-            self.drawing.letter(2*self.offset+self.font_size*x,
-                2*self.offset+self.font_size*y,
-                self.array[y][x],
+            color = COLORS[self.color_array[x,y]]
+            self.drawing.letter(2*self.offset+self.font_size*y,
+                2*self.offset+self.font_size*x,
+                self.array[x,y],
                 color=color)
 
     def _build_drawing(self):
         """Build drawing object."""
-        self.array = configuration_to_array(self.sequence, self.configuration)
-        self.color_array = configuration_to_array(self.color_sequence, self.configuration)
+        self.array = np.array(configuration_to_array(self.sequence, self.configuration))
+        self.color_array = np.array(configuration_to_array(self.color_sequence, self.configuration))
         # Build SVG grid object
-        self.shape = (len(self.array), len(self.array[0]))
+        self.shape = self.array.shape
         self.height = self.font_size * self.shape[0]
         self.width = self.font_size * self.shape[1]
         self.drawing = Drawing(
@@ -221,6 +222,7 @@ class Configuration(SVG):
             dot_scale=self.dot_scale
         )
         self.offset = 0.25 * self.font_size
+        
         # Object for how to draw a configuration
         self.mapping = {"d":self.drawing.down,
             "u":self.drawing.up,
@@ -230,8 +232,8 @@ class Configuration(SVG):
             " ":None
         }
         # Draw grid in svg
-        for y in range(self.shape[0]):
-            for x in range(self.shape[1]):
+        for x in range(self.shape[0]):
+            for y in range(self.shape[1]):
                 self._add_item(x,y)
 
 class Drawing(svgwrite.Drawing):
