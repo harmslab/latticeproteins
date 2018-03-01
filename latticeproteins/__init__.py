@@ -6,7 +6,7 @@ Originally written by Jesse Bloom.
 
 Extended by Zach Sailer."""
 from .sequences import random_sequence
-from .thermodynamics import LatticeThermodynamics, GroupThermodynamics
+from .protein import LatticeProtein, LatticeProteins
 from .conformations import Conformations, ConformationList
 from .interactions import miyazawa_jernigan
 from . import draw

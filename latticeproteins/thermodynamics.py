@@ -11,7 +11,7 @@ import os
 import math, sys
 import numpy as np
 
-from . import conformations
+from . import conformations as c
 from .interactions import miyazawa_jernigan
 from .conformations import fold_energy
 #----------------------------------------------------------------------
@@ -20,28 +20,31 @@ class ThermodynamicsError(Exception):
 
 #----------------------------------------------------------------------
 class LatticeThermodynamics(object):
-    """Attaches thermodynamic evaluators to a lattice protein conformation database.
+    """A single lattice protein.
 
     Parameters
     ----------
     temp : float
         the temperature at which the fitness is computed.
-    confs : conformations.Conformations object
+
+    conformations : conformations.Conformations object
         is the 'conformations.Conformations' object
         used to fold the protein sequences.  'conformations.Length()'
         specifies the length of the protein sequences that can be
         folded.
     """
     #------------------------------------------------------------------
-    def __init__(self, temp, confs):
+    def __init__(self, conformations, temp=1.0):
         # Assign class instance variables and error check
         if not (isinstance(temp, (int, float)) and temp > 0):
             raise ThermodynamicsError("Invalid 'temp' of %r." % temp)
+
         # Check Conformations.
-        if not isinstance(confs, conformations.Conformations) and not isinstance(confs, conformations.ConformationList):
+        if not isinstance(conformations, c.Conformations) and not isinstance(conformations, c.ConformationList):
             raise TypeError("conformations must be a Conformations or ConformationList object.")
+
         self.temp = temp
-        self.confs = confs
+        self.conformations = conformations
 
     @classmethod
     def from_length(cls, length, temp, database_dir="database/", interactions=miyazawa_jernigan):
@@ -50,7 +53,7 @@ class LatticeThermodynamics(object):
         if not os.path.exists(database_dir):
             print("Creating a conformations database in %s" % database_dir)
             os.makedirs(database_dir)
-        confs = conformations.Conformations(length, database_dir=database_dir, interaction_energies=interactions)
+        confs = c.Conformations(length, database_dir=database_dir, interaction_energies=interactions)
         self = cls(temp, confs)
         return self
 
@@ -75,7 +78,7 @@ class LatticeThermodynamics(object):
         if target is None:
             (minE, conf, partitionsum, folds) = self._nativeE(seq)
         else:
-            minE = fold_energy(seq, target, self.confs._interaction_energies)
+            minE = fold_energy(seq, target, self.conformations._interaction_energies)
         return minE
 
     def _nativeE(self, seq):
@@ -101,7 +104,7 @@ class LatticeThermodynamics(object):
         """
         if len(seq) != self.length():
             raise ThermodynamicsError("Invalid 'seq' of %r." % seq)
-        return self.confs.fold_sequence(seq, self.temp)
+        return self.conformations.fold_sequence(seq, self.temp)
     #---------------------------------------------------------------------
     def stability(self, seq, target=None):
         """Computes the stability of a sequence if it is below cutoff.
@@ -118,7 +121,7 @@ class LatticeThermodynamics(object):
         """
         nativeE_results = self._nativeE(seq)
         if target is not None:
-            minE = fold_energy(seq, target, self.confs._interaction_energies)
+            minE = fold_energy(seq, target, self.conformations._interaction_energies)
             nativeE_results = list(nativeE_results)
             nativeE_results[0] = minE
             nativeE_results[1] = target
@@ -171,7 +174,7 @@ class LatticeThermodynamics(object):
         """
         nativeE_results = self._nativeE(seq)
         if target != None:
-            minE = fold_energy(seq, target, self.confs._interaction_energies)
+            minE = fold_energy(seq, target, self.conformations._interaction_energies)
             nativeE_results = list(nativeE_results)
             nativeE_results[0] = minE
             nativeE_results[1] = target
@@ -264,20 +267,24 @@ class LatticeThermodynamics(object):
     #---------------------------------------------------------------------
     def length(self):
         """Returns the sequence length for which fitnesses are computed."""
-        return self.confs.length()
+        return self.conformations.length()
 
 
-class GroupThermodynamics(object):
-    """Efficiently calculates thermodynamic properties for a list of lattice proteins.
+class LatticeGroupThermodynamics(object):
+    """A group of lattice proteins. Useful for fast calculation of a bunch of
+    lattice proteins with the same length.
 
     Parameters
     ----------
     seqlist : list
         List of lattice proteins.
+
     temp : float
         temperature of the system.
-    confs : Conformations or ConformationList object
+
+    conformations : Conformations or ConformationList object
         Conformation database for lattice with set length
+
     target : str (optional, default=None)
         target conformation to fold protein list
 
@@ -285,26 +292,30 @@ class GroupThermodynamics(object):
     ----------
     seqlist : list
         list of sequences.
+
     temp : float
         temperature of the system.
+
     nativeEs : array
         native (or target) energy for sequences in seqlist
+
     stabilities : array
         array of stabilities for sequences in seqlist
+
     fracfolded : array
         array of fraction folded for sequences in seqlist
     """
-    def __init__(self, seqlist, temp, confs, target=None):
+    def __init__(self, seqlist, temp, conformations, target=None):
         # Assign class instance variables and error check
         if not (isinstance(temp, (int, float)) and temp > 0):
             raise ThermodynamicsError("Invalid 'temp' of %r." % temp)
         self.temp = temp
 
         # Set conformations after checking
-        if not isinstance(confs, conformations.Conformations) and not isinstance(confs, conformations.ConformationList):
+        if not isinstance(conformations, c.Conformations) and not isinstance(conformations, c.ConformationList):
             raise TypeError("conformations must be a Conformations or ConformationList object.")
-        self.confs = confs
-        self.length = self.confs.length
+        self.conformations = conformations
+        self.length = self.conformations.length
 
         # Check length of target
         if len(target)-1 != self.length:
@@ -313,7 +324,7 @@ class GroupThermodynamics(object):
 
         self.seqlist = seqlist
         self.nativeEs = np.empty(len(self.seqlist), dtype=float)
-        self.confs = np.empty(len(self.seqlist), dtype="U|" + self.length)
+        self.conformations = np.empty(len(self.seqlist), dtype="U|" + self.length)
         self._partitionsum = np.empty(len(self.seqlist), dtype=float)
 
         for i, seq in enumerate(self.seqlist):
@@ -322,12 +333,12 @@ class GroupThermodynamics(object):
                 raise ThermodynamicsError("Length of sequence, %s, does not equal conformation lengths" % seq)
 
             # Fold sequence and set energy
-            out = self.confs.fold_sequence(seq, self.temp)
+            out = self.conformations.fold_sequence(seq, self.temp)
             if target is not None:
                 self.nativeEs[i] = conformations.fold_energy(seq, target)
             else:
                 self.nativeEs[i] = out[0]
-            self.confs[i] = out[1]
+            self.conformations[i] = out[1]
             self._partitionsum[i] = out[2]
 
     @property
