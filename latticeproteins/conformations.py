@@ -567,10 +567,10 @@ class ConformationList(object):
         specifies the interaction energies between
         residues. By default, this is interactions.miyazawa_jernigan.
     """
-    def __init__(self, length, conflist, interaction_energies=miyazawa_jernigan):
-        self._length = length
+    def __init__(self, conflist, interaction_energies=miyazawa_jernigan):
         self._interaction_energies = miyazawa_jernigan
         self._conflist = conflist
+        self._length = len(self._conflist[0]) + 1
 
     def length(self):
         """Returns the length of the protein these conformations are for."""

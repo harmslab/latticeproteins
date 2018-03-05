@@ -39,10 +39,15 @@ class LatticeProtein(object):
             self.conformations = Conformations(self.length)
 
         _ = self.conformations.fold_sequence(self.sequence, self.temp)
+
         self.native_energy = _[0]
-        self.native_conf = _[1]
         self.partition_sum = _[2]
         self.folded = _[3]
+
+        if target is  None:
+            self.native_conf = _[1]
+        else:
+            self.native_conf = target
 
         # Calculate stability
         self.stability = self.native_energy + (

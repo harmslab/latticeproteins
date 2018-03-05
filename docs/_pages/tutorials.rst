@@ -25,7 +25,7 @@ Input:
 
     import latticeproteins
 
-The ``LatticeThermodyanmics`` class creates objects that can calculate
+The ``LatticeThermodynamics`` class creates objects that can calculate
 lattice protein thermodynamics for any sequences of a specified length.
 In the example below, we initialize this object for sequences of length
 10. Note that to avoid repeating expensive conformation enumerations,
